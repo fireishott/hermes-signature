@@ -128,7 +128,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
         total_tok = prompt_tok + completion_tok
 
         if show_tokens and total_tok:
-            parts.append(f"{total_tok:,} tok")
+            parts.append(f"{prompt_tok:,}↑ {completion_tok:,}↓ {total_tok:,} tok")
 
         if show_cost:
             custom_pricing = cfg.get("pricing")
