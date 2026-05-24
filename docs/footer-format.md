@@ -1,0 +1,105 @@
+# Footer Format
+
+## Structure
+
+```
+-# {icon} {agent_name} · {model} · {provider} · ~{latency}s est. · {tokens} tok · ~${cost}
+```
+
+Fields are joined with ` · ` (space-middot-space). Any field that is disabled or unavailable is omitted — the separators contract automatically.
+
+---
+
+## Prefix
+
+The footer is appended to the response with two newlines:
+
+```
+{response_text}
+
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,847 tok · ~$0.0004
+```
+
+The `-#` prefix is a Discord markdown feature — it renders as small, dimmed subheading text. On other platforms it appears as literal `-#` followed by the content.
+
+---
+
+## Field Details
+
+| Field | Example | Notes |
+|---|---|---|
+| icon + name | `⚡ ignyte` | Always present when plugin is enabled |
+| model | `MiniMax-M2.7` | Omitted if model name is empty |
+| provider | `minimax` | Omitted if provider is empty |
+| latency | `~1.4s est.` | Omitted if `pre_llm_call` wasn't recorded for this session |
+| tokens | `1,847 tok` | Omitted if total is zero |
+| cost | `~$0.0004` | See cost rendering rules below |
+
+### Cost Rendering
+
+| Condition | Displayed |
+|---|---|
+| Model not in pricing table | field omitted |
+| `input: 0.00, output: 0.00` | `free` |
+| Cost > 0 but < $0.0001 | `<$0.0001` |
+| Cost ≥ $0.0001 | `~$X.XXXX` (4 decimal places) |
+
+---
+
+## Platform Rendering
+
+### Discord
+
+Discord renders `-#` as small dimmed text (Discord "subtext" markdown). The footer appears visually de-emphasized below the main response — ideal for metadata that shouldn't dominate the message.
+
+```
+Here's your answer...
+
+⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,847 tok · ~$0.0004
+↑ rendered small and grey
+```
+
+### BlueBubbles / iMessage
+
+No special markdown rendering. The `-#` appears as a literal prefix:
+
+```
+Here's your answer...
+
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,847 tok · ~$0.0004
+```
+
+Consider using `platforms: ["discord"]` if you only want the footer where it renders nicely, or customize the icon/format for other platforms.
+
+### CLI
+
+Same as BlueBubbles — plain text, `-#` is literal. Works fine as a visible footer.
+
+---
+
+## Examples by Field Combination
+
+All fields on:
+```
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,847 tok · ~$0.0004
+```
+
+No provider, no cost:
+```
+-# ⚡ ignyte · MiniMax-M2.7 · ~1.4s est. · 1,847 tok
+```
+
+Local model (free):
+```
+-# ⚡ ignyte · qwen2.5:7b · custom · ~0.8s est. · 512 tok · free
+```
+
+Model not in pricing table:
+```
+-# ⚡ ignyte · my-unknown-model · custom · ~1.1s est. · 300 tok
+```
+
+Tokens only:
+```
+-# ⚡ ignyte · 1,847 tok
+```

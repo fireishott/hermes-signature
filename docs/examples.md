@@ -1,0 +1,148 @@
+# Examples
+
+## Default Configuration
+
+Config:
+```yaml
+signature:
+  enabled: true
+  agent_name: "ignyte"
+  icon: "⚡"
+```
+
+Footer:
+```
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,847 tok · ~$0.0004
+```
+
+---
+
+## High Token Turn (Tool Chain)
+
+A turn that made 3 tool calls before responding — tokens accumulate across all rounds:
+
+```
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~4.2s est. · 8,341 tok · ~$0.0036
+```
+
+---
+
+## Gemini (Vision / Aux Model)
+
+```
+-# ⚡ ignyte · gemini-2.5-flash-lite · gemini · ~0.9s est. · 623 tok · ~$0.0001
+```
+
+---
+
+## Local Model (Free)
+
+Using qwen2.5:7b on Ollama:
+```
+-# ⚡ ignyte · qwen2.5:7b · custom · ~2.1s est. · 512 tok · free
+```
+
+---
+
+## Claude
+
+```
+-# ⚡ ignyte · claude-sonnet-4-6 · anthropic · ~2.3s est. · 1,102 tok · ~$0.0195
+```
+
+---
+
+## OpenAI
+
+```
+-# ⚡ ignyte · gpt-4o · openai · ~1.8s est. · 940 tok · ~$0.0118
+```
+
+---
+
+## Very Cheap Turn
+
+When cost rounds below $0.0001:
+```
+-# ⚡ ignyte · gemini-2.5-flash-lite · gemini · ~0.6s est. · 88 tok · <$0.0001
+```
+
+---
+
+## Unknown Model (No Cost)
+
+If the model isn't in the pricing table and no override is set, cost is omitted:
+```
+-# ⚡ ignyte · my-fine-tune · custom · ~1.3s est. · 700 tok
+```
+
+---
+
+## Discord-Only Footer
+
+Config with platform filter:
+```yaml
+signature:
+  enabled: true
+  agent_name: "ignyte"
+  platforms: ["discord"]
+```
+
+On Discord — footer appended. On BlueBubbles / CLI — no footer.
+
+---
+
+## Minimal Footer (Name + Tokens Only)
+
+Config:
+```yaml
+signature:
+  enabled: true
+  agent_name: "bot"
+  icon: "·"
+  show_model: false
+  show_provider: false
+  show_latency: false
+  show_tokens: true
+  show_cost: false
+```
+
+Footer:
+```
+-# · bot · 1,847 tok
+```
+
+---
+
+## Custom Agent Name and Icon
+
+Config:
+```yaml
+signature:
+  enabled: true
+  agent_name: "aria"
+  icon: "🔮"
+```
+
+Footer:
+```
+-# 🔮 aria · claude-opus-4-7 · anthropic · ~3.1s est. · 2,041 tok · ~$0.1836
+```
+
+---
+
+## Cost Override for Custom Model
+
+Config:
+```yaml
+signature:
+  pricing:
+    my-fine-tune:
+      input: 2.00
+      output: 8.00
+```
+
+Footer with that model:
+```
+-# ⚡ ignyte · my-fine-tune · custom · ~1.5s est. · 950 tok · ~$0.0046
+```
