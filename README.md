@@ -96,6 +96,22 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
+## Acknowledgments
+
+This plugin exists because of the people who build things in the open and share them without gatekeeping.
+
+**[NousResearch](https://github.com/NousResearch)** — for building Hermes Agent and designing a plugin system clean enough that something like this is a weekend project, not a fork. The hook architecture made this possible without touching core.
+
+**The Hermes contributors and community** — the developers maintaining the agent runtime, writing plugins, and pushing the ecosystem forward. This plugin stands on top of what you built.
+
+**The homelab community** — the people running their own stacks at home, self-hosting everything from LLMs to smart home infrastructure, and sharing how they do it. You proved that serious infrastructure doesn't require enterprise budgets.
+
+**The vibe coders** — those who follow the architect-bricklayer ideal: knowing the blueprint before laying the first brick, thinking in systems while staying hands-on in the code. You ship things that work because you understand both ends of the stack.
+
+Build something, share it, help the next person go faster.
+
+---
+
 ## License
 
 MIT
