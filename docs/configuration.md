@@ -9,7 +9,7 @@ All configuration lives under the `signature:` key in `~/.hermes/config.yaml`.
 ```yaml
 signature:
   enabled: true             # Master switch. false = plugin is silent.
-  agent_name: "ignyte"      # Label shown at the start of every footer.
+  agent_name: "hermes"      # Label shown at the start of every footer.
   icon: "⚡"                # Leading character(s). Any emoji or text.
 
   show_model: true          # Include model name in footer.
@@ -40,7 +40,7 @@ Master on/off switch. When `false`, the plugin registers its hooks but returns `
 ---
 
 ### `agent_name`
-**Type:** `string` | **Default:** `"ignyte"`
+**Type:** `string` | **Default:** `"hermes"`
 
 The label displayed after the icon at the start of the footer. Change this to match your agent's name or persona.
 
@@ -87,7 +87,7 @@ Format: `~1.4s est.`
 
 Includes total tokens for the turn (prompt + completion, summed across all API calls including tool call rounds).
 
-Format: `1,847 tok`
+Format: `1,247↑ 600↓ 1,847 tok` (input↑ completion↓ total)
 
 ---
 
@@ -147,7 +147,7 @@ pricing:
 ```yaml
 signature:
   enabled: true
-  agent_name: "ignyte"
+  agent_name: "hermes"
 ```
 
 Everything else defaults to `true` / empty.

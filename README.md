@@ -9,7 +9,7 @@
 A lightweight [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin that appends a signature footer to every LLM response — showing model, provider, estimated latency, token usage, and cost.
 
 ```
--# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
+-# ⚡ hermes · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
 ```
 
 No patching of Hermes core. Survives `hermes update`. Pure plugin via the native `transform_llm_output` hook.
@@ -47,7 +47,7 @@ The installer copies the plugin into `~/.hermes/hermes-agent/plugins/` and appen
 ```yaml
 signature:
   enabled: true
-  agent_name: "ignyte"     # Label shown at the start of the footer
+  agent_name: "hermes"     # Label shown at the start of the footer
   icon: "⚡"               # Leading icon/emoji
   show_model: true          # Include model name
   show_provider: true       # Include provider name

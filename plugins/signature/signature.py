@@ -2,7 +2,7 @@
 hermes-signature — appends a configurable signature footer to every LLM response.
 
 Footer example:
-    -# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,847 tok · ~$0.0004
+    -# ⚡ hermes · MiniMax-M2.7 · minimax · ~1.2s est. · 1,847 tok · ~$0.0004
 
 Hooks used:
     pre_llm_call        — record turn start time
@@ -12,7 +12,7 @@ Hooks used:
 Config (config.yaml):
     signature:
       enabled: true
-      agent_name: "ignyte"
+      agent_name: "hermes"
       icon: "⚡"
       show_model: true
       show_provider: true
@@ -92,7 +92,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     model = kwargs.get("model", "") or ""
 
     icon        = cfg.get("icon", "⚡")
-    agent_name  = cfg.get("agent_name", "ignyte")
+    agent_name  = cfg.get("agent_name", "hermes")
     show_model    = cfg.get("show_model", True)
     show_provider = cfg.get("show_provider", True)
     show_latency  = cfg.get("show_latency", True)

@@ -29,7 +29,7 @@ if ! grep -q "^signature:" "$CONFIG" 2>/dev/null; then
 # ── Hermes Signature ──────────────────────────────────────────────────────────
 signature:
   enabled: true
-  agent_name: "ignyte"
+  agent_name: "hermes"
   icon: "⚡"
   show_model: true
   show_provider: true
