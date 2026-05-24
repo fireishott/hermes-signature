@@ -9,7 +9,7 @@
 A lightweight [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin that appends a signature footer to every LLM response — showing model, provider, estimated latency, token usage, and cost.
 
 ```
--# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,847 tok · ~$0.0004
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
 ```
 
 No patching of Hermes core. Survives `hermes update`. Pure plugin via the native `transform_llm_output` hook.
@@ -69,7 +69,7 @@ See [docs/configuration.md](docs/configuration.md) for the full reference.
 ## Footer Format
 
 ```
--# {icon} {agent_name} · {model} · {provider} · ~{latency}s est. · {tokens} tok · ~${cost}
+-# {icon} {agent_name} · {model} · {provider} · ~{latency}s est. · {input}↑ {output}↓ {total} tok · ~${cost}
 ```
 
 The `-#` prefix renders as small dimmed text in Discord. Each field is optional and can be toggled independently.

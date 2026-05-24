@@ -12,7 +12,7 @@ signature:
 
 Footer:
 ```
--# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,847 tok · ~$0.0004
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
 ```
 
 ---
@@ -22,7 +22,7 @@ Footer:
 A turn that made 3 tool calls before responding — tokens accumulate across all rounds:
 
 ```
--# ⚡ ignyte · MiniMax-M2.7 · minimax · ~4.2s est. · 8,341 tok · ~$0.0036
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~4.2s est. · 6,841↑ 1,500↓ 8,341 tok · ~$0.0036
 ```
 
 ---
@@ -30,7 +30,7 @@ A turn that made 3 tool calls before responding — tokens accumulate across all
 ## Gemini (Vision / Aux Model)
 
 ```
--# ⚡ ignyte · gemini-2.5-flash-lite · gemini · ~0.9s est. · 623 tok · ~$0.0001
+-# ⚡ ignyte · gemini-2.5-flash-lite · gemini · ~0.9s est. · 510↑ 113↓ 623 tok · ~$0.0001
 ```
 
 ---
@@ -39,7 +39,7 @@ A turn that made 3 tool calls before responding — tokens accumulate across all
 
 Using qwen2.5:7b on Ollama:
 ```
--# ⚡ ignyte · qwen2.5:7b · custom · ~2.1s est. · 512 tok · free
+-# ⚡ ignyte · qwen2.5:7b · custom · ~2.1s est. · 412↑ 100↓ 512 tok · free
 ```
 
 ---
@@ -47,7 +47,7 @@ Using qwen2.5:7b on Ollama:
 ## Claude
 
 ```
--# ⚡ ignyte · claude-sonnet-4-6 · anthropic · ~2.3s est. · 1,102 tok · ~$0.0195
+-# ⚡ ignyte · claude-sonnet-4-6 · anthropic · ~2.3s est. · 882↑ 220↓ 1,102 tok · ~$0.0195
 ```
 
 ---
@@ -55,7 +55,7 @@ Using qwen2.5:7b on Ollama:
 ## OpenAI
 
 ```
--# ⚡ ignyte · gpt-4o · openai · ~1.8s est. · 940 tok · ~$0.0118
+-# ⚡ ignyte · gpt-4o · openai · ~1.8s est. · 760↑ 180↓ 940 tok · ~$0.0118
 ```
 
 ---
@@ -64,7 +64,7 @@ Using qwen2.5:7b on Ollama:
 
 When cost rounds below $0.0001:
 ```
--# ⚡ ignyte · gemini-2.5-flash-lite · gemini · ~0.6s est. · 88 tok · <$0.0001
+-# ⚡ ignyte · gemini-2.5-flash-lite · gemini · ~0.6s est. · 72↑ 16↓ 88 tok · <$0.0001
 ```
 
 ---
@@ -73,7 +73,7 @@ When cost rounds below $0.0001:
 
 If the model isn't in the pricing table and no override is set, cost is omitted:
 ```
--# ⚡ ignyte · my-fine-tune · custom · ~1.3s est. · 700 tok
+-# ⚡ ignyte · my-fine-tune · custom · ~1.3s est. · 580↑ 120↓ 700 tok
 ```
 
 ---
@@ -109,7 +109,7 @@ signature:
 
 Footer:
 ```
--# · bot · 1,847 tok
+-# · bot · 1,247↑ 600↓ 1,847 tok
 ```
 
 ---
@@ -126,7 +126,7 @@ signature:
 
 Footer:
 ```
--# 🔮 aria · claude-opus-4-7 · anthropic · ~3.1s est. · 2,041 tok · ~$0.1836
+-# 🔮 aria · claude-opus-4-7 · anthropic · ~3.1s est. · 1,621↑ 420↓ 2,041 tok · ~$0.1836
 ```
 
 ---
@@ -144,5 +144,5 @@ signature:
 
 Footer with that model:
 ```
--# ⚡ ignyte · my-fine-tune · custom · ~1.5s est. · 950 tok · ~$0.0046
+-# ⚡ ignyte · my-fine-tune · custom · ~1.5s est. · 780↑ 170↓ 950 tok · ~$0.0046
 ```

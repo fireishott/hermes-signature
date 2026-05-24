@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1] — 2026-05-24
+
+### Changed
+- Token field now shows input↑, completion↓, and total: `1,247↑ 600↓ 1,847 tok`
+
+---
+
 All notable changes to hermes-signature will be documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).

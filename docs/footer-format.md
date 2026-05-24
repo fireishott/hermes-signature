@@ -32,7 +32,7 @@ The `-#` prefix is a Discord markdown feature — it renders as small, dimmed su
 | model | `MiniMax-M2.7` | Omitted if model name is empty |
 | provider | `minimax` | Omitted if provider is empty |
 | latency | `~1.4s est.` | Omitted if `pre_llm_call` wasn't recorded for this session |
-| tokens | `1,847 tok` | Omitted if total is zero |
+| tokens | `1,247↑ 600↓ 1,847 tok` | input↑ completion↓ total. Omitted if total is zero |
 | cost | `~$0.0004` | See cost rendering rules below |
 
 ### Cost Rendering
@@ -81,25 +81,25 @@ Same as BlueBubbles — plain text, `-#` is literal. Works fine as a visible foo
 
 All fields on:
 ```
--# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,847 tok · ~$0.0004
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
 ```
 
 No provider, no cost:
 ```
--# ⚡ ignyte · MiniMax-M2.7 · ~1.4s est. · 1,847 tok
+-# ⚡ ignyte · MiniMax-M2.7 · ~1.4s est. · 1,247↑ 600↓ 1,847 tok
 ```
 
 Local model (free):
 ```
--# ⚡ ignyte · qwen2.5:7b · custom · ~0.8s est. · 512 tok · free
+-# ⚡ ignyte · qwen2.5:7b · custom · ~0.8s est. · 412↑ 100↓ 512 tok · free
 ```
 
 Model not in pricing table:
 ```
--# ⚡ ignyte · my-unknown-model · custom · ~1.1s est. · 300 tok
+-# ⚡ ignyte · my-unknown-model · custom · ~1.1s est. · 240↑ 60↓ 300 tok
 ```
 
 Tokens only:
 ```
--# ⚡ ignyte · 1,847 tok
+-# ⚡ ignyte · 1,247↑ 600↓ 1,847 tok
 ```
