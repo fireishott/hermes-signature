@@ -106,7 +106,7 @@ This plugin exists because of the people who build things in the open and share 
 
 **The homelab community** — the people running their own stacks at home, self-hosting everything from LLMs to smart home infrastructure, and sharing how they do it. You proved that serious infrastructure doesn't require enterprise budgets.
 
-**The vibe coders** — those who follow the architect-bricklayer ideal: knowing the blueprint before laying the first brick, thinking in systems while staying hands-on in the code. You ship things that work because you understand both ends of the stack.
+**The vibe coders** — the ones who get it. The architect may not know how to lay a brick. The bricklayer may not know how to design. But when they work together, beautiful things get built. Keep finding your people.
 
 Build something, share it, help the next person go faster.
 
