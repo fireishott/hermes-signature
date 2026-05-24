@@ -29,6 +29,8 @@ signature:
   show_model: true
   show_provider: true
   show_latency: true
+  show_tokens: true
+  show_cost: true
   platforms: []   # empty = all; e.g. ["discord", "bluebubbles"] to restrict
 EOF
   echo "✓ Config block added to $CONFIG"
