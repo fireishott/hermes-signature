@@ -1,0 +1,6 @@
+name: hermes-signature
+version: 0.1.0
+kind: standalone
+description: Appends a lightweight signature footer to every Hermes response.
+author: FIH / Ignyte
+platforms: [macos, linux]
