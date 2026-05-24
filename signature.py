@@ -35,7 +35,7 @@ import threading
 import time
 from typing import Any
 
-from plugins.signature.pricing import estimate_cost
+from .pricing import estimate_cost
 
 # Per-session token accumulator: {session_id: {"prompt": int, "completion": int}}
 _session_usage: dict[str, dict[str, int]] = {}

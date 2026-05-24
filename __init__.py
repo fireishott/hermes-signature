@@ -1,4 +1,4 @@
-from plugins.signature.signature import (
+from .signature import (
     on_pre_llm_call,
     on_post_api_request,
     on_post_tool_call,
