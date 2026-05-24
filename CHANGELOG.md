@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.0] — 2026-05-24
+
+### Added
+- Tool call footer line — shows every tool used in the turn with call counts
+  - Single call: `read_file`
+  - Multiple calls: `bash×3`
+  - Format: `-# 🔧 web_search×2 · bash · read_file`
+- `post_tool_call` hook registered to accumulate tool counts per session
+- `show_tools` config flag (default: `true`) to toggle tool line independently
+
 ## [0.1.1] — 2026-05-24
 
 ### Changed

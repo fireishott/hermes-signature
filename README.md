@@ -10,6 +10,7 @@ A lightweight [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugi
 
 ```
 -# ⚡ hermes · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
+-# 🔧 web_search×2 · bash · read_file
 ```
 
 No patching of Hermes core. Survives `hermes update`. Pure plugin via the native `transform_llm_output` hook.
@@ -54,6 +55,7 @@ signature:
   show_latency: true        # Include ~Xs est. latency
   show_tokens: true         # Include total token count
   show_cost: true           # Include estimated cost
+  show_tools: true          # Include tool call line (🔧 tool×N)
   platforms: []             # Restrict to platforms; empty = all
                             # e.g. ["discord", "bluebubbles"]
   pricing:                  # Optional per-model price overrides (USD/1M tokens)
@@ -70,6 +72,7 @@ See [docs/configuration.md](docs/configuration.md) for the full reference.
 
 ```
 -# {icon} {agent_name} · {model} · {provider} · ~{latency}s est. · {input}↑ {output}↓ {total} tok · ~${cost}
+-# 🔧 {tool}×{n} · {tool} · ...
 ```
 
 The `-#` prefix renders as small dimmed text in Discord. Each field is optional and can be toggled independently.

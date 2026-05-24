@@ -2,23 +2,26 @@
 hermes-signature — appends a configurable signature footer to every LLM response.
 
 Footer example:
-    -# ⚡ hermes · MiniMax-M2.7 · minimax · ~1.2s est. · 1,847 tok · ~$0.0004
+    -# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
+    -# 🔧 web_search×3 · bash×2 · read_file
 
 Hooks used:
-    pre_llm_call        — record turn start time
-    post_api_request    — accumulate token usage per session
+    pre_llm_call         — record turn start time, reset accumulators
+    post_api_request     — accumulate token usage per session
+    post_tool_call       — accumulate tool call counts per session
     transform_llm_output — build and append footer
 
 Config (config.yaml):
     signature:
       enabled: true
-      agent_name: "hermes"
+      agent_name: "ignyte"
       icon: "⚡"
       show_model: true
       show_provider: true
       show_latency: true
       show_tokens: true
       show_cost: true
+      show_tools: true
       platforms: []        # empty = all; ["discord", "bluebubbles"] to restrict
       pricing:             # optional overrides (USD per 1M tokens)
         MiniMax-M2.7:
@@ -42,6 +45,10 @@ _usage_lock = threading.Lock()
 _turn_start: dict[str, float] = {}
 _start_lock = threading.Lock()
 
+# Per-session tool call counts: {session_id: {tool_name: count}}
+_session_tools: dict[str, dict[str, int]] = {}
+_tools_lock = threading.Lock()
+
 
 def _load_config() -> dict:
     try:
@@ -53,12 +60,14 @@ def _load_config() -> dict:
 
 
 def on_pre_llm_call(**kwargs: Any) -> None:
-    """Record turn start time and reset token accumulator for this session."""
+    """Record turn start time and reset accumulators for this session."""
     session_id = kwargs.get("session_id", "") or ""
     with _start_lock:
         _turn_start[session_id] = time.monotonic()
     with _usage_lock:
         _session_usage[session_id] = {"prompt": 0, "completion": 0}
+    with _tools_lock:
+        _session_tools[session_id] = {}
 
 
 def on_post_api_request(**kwargs: Any) -> None:
@@ -73,6 +82,17 @@ def on_post_api_request(**kwargs: Any) -> None:
         bucket = _session_usage.setdefault(session_id, {"prompt": 0, "completion": 0})
         bucket["prompt"] += prompt
         bucket["completion"] += completion
+
+
+def on_post_tool_call(**kwargs: Any) -> None:
+    """Accumulate tool call counts for this turn."""
+    session_id = kwargs.get("session_id", "") or ""
+    tool_name = kwargs.get("tool_name", "") or ""
+    if not tool_name:
+        return
+    with _tools_lock:
+        bucket = _session_tools.setdefault(session_id, {})
+        bucket[tool_name] = bucket.get(tool_name, 0) + 1
 
 
 def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
@@ -98,8 +118,8 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     show_latency  = cfg.get("show_latency", True)
     show_tokens   = cfg.get("show_tokens", True)
     show_cost     = cfg.get("show_cost", True)
+    show_tools    = cfg.get("show_tools", True)
 
-    # Provider isn't passed to transform_llm_output; read from usage dict context
     provider = kwargs.get("provider", "")
 
     parts: list[str] = [f"{icon} {agent_name}"]
@@ -141,5 +161,16 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
                 else:
                     parts.append(f"~${cost:.4f}")
 
+    # Tool calls
+    with _tools_lock:
+        tools = _session_tools.pop(session_id, None)
+
     footer = "-# " + " · ".join(parts)
+
+    if show_tools and tools:
+        tool_parts = []
+        for name, count in tools.items():
+            tool_parts.append(f"{name}×{count}" if count > 1 else name)
+        footer += "\n-# 🔧 " + " · ".join(tool_parts)
+
     return response_text + "\n\n" + footer
