@@ -2,7 +2,7 @@
 hermes-signature — appends a configurable signature footer to every LLM response.
 
 Footer example:
-    -# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
+    -# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 · 12 turns
     -# 🔧 web_search×3 · bash×2 · read_file
 
 Hooks used:
@@ -22,6 +22,7 @@ Config (config.yaml):
       show_tokens: true
       show_cost: true
       show_tools: true
+      show_turns: true     # number of turns in this session
       show_reset: true     # resets in Xh Ym (anthropic, openai-codex, openrouter)
       show_usage_pct: false # X% used (same providers; off by default)
       platforms: []        # empty = all; ["discord", "bluebubbles"] to restrict
@@ -52,6 +53,10 @@ _start_lock = threading.Lock()
 _session_tools: dict[str, dict[str, int]] = {}
 _tools_lock = threading.Lock()
 
+# Per-session turn counter: {session_id: int} — never reset, accumulates for session lifetime
+_session_turns: dict[str, int] = {}
+_turns_lock = threading.Lock()
+
 
 def _load_config() -> dict:
     try:
@@ -71,6 +76,8 @@ def on_pre_llm_call(**kwargs: Any) -> None:
         _session_usage[session_id] = {"prompt": 0, "completion": 0}
     with _tools_lock:
         _session_tools[session_id] = {}
+    with _turns_lock:
+        _session_turns[session_id] = _session_turns.get(session_id, 0) + 1
 
 
 def on_post_api_request(**kwargs: Any) -> None:
@@ -122,6 +129,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     show_tokens    = cfg.get("show_tokens", True)
     show_cost      = cfg.get("show_cost", True)
     show_tools     = cfg.get("show_tools", True)
+    show_turns     = cfg.get("show_turns", True)
     show_reset     = cfg.get("show_reset", True)
     show_usage_pct = cfg.get("show_usage_pct", False)
 
@@ -169,6 +177,13 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     # Tool calls
     with _tools_lock:
         tools = _session_tools.pop(session_id, None)
+
+    # Turn counter
+    if show_turns:
+        with _turns_lock:
+            turn_count = _session_turns.get(session_id, 0)
+        if turn_count:
+            parts.append(f"{turn_count} turn" if turn_count == 1 else f"{turn_count} turns")
 
     # Usage quota — read from cache (populated by background thread on prior call)
     if show_usage_pct:
