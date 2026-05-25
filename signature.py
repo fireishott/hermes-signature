@@ -22,6 +22,8 @@ Config (config.yaml):
       show_tokens: true
       show_cost: true
       show_tools: true
+      show_reset: true     # resets in Xh Ym (anthropic, openai-codex, openrouter)
+      show_usage_pct: false # X% used (same providers; off by default)
       platforms: []        # empty = all; ["discord", "bluebubbles"] to restrict
       pricing:             # optional overrides (USD per 1M tokens)
         MiniMax-M2.7:
@@ -36,6 +38,7 @@ import time
 from typing import Any
 
 from .pricing import estimate_cost
+from .usage import get_reset_label, get_usage_label, refresh_in_background
 
 # Per-session token accumulator: {session_id: {"prompt": int, "completion": int}}
 _session_usage: dict[str, dict[str, int]] = {}
@@ -113,12 +116,14 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     icon        = cfg.get("icon", "⚡")
     agent_name  = cfg.get("agent_name", "hermes")
-    show_model    = cfg.get("show_model", True)
-    show_provider = cfg.get("show_provider", True)
-    show_latency  = cfg.get("show_latency", True)
-    show_tokens   = cfg.get("show_tokens", True)
-    show_cost     = cfg.get("show_cost", True)
-    show_tools    = cfg.get("show_tools", True)
+    show_model     = cfg.get("show_model", True)
+    show_provider  = cfg.get("show_provider", True)
+    show_latency   = cfg.get("show_latency", True)
+    show_tokens    = cfg.get("show_tokens", True)
+    show_cost      = cfg.get("show_cost", True)
+    show_tools     = cfg.get("show_tools", True)
+    show_reset     = cfg.get("show_reset", True)
+    show_usage_pct = cfg.get("show_usage_pct", False)
 
     provider = kwargs.get("provider", "")
 
@@ -164,6 +169,20 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     # Tool calls
     with _tools_lock:
         tools = _session_tools.pop(session_id, None)
+
+    # Usage quota — read from cache (populated by background thread on prior call)
+    if show_usage_pct:
+        label = get_usage_label(provider)
+        if label:
+            parts.append(label)
+
+    if show_reset:
+        label = get_reset_label(provider)
+        if label:
+            parts.append(label)
+
+    # Kick off background refresh so the NEXT call has fresh data
+    refresh_in_background(provider)
 
     footer = "-# " + " · ".join(parts)
 

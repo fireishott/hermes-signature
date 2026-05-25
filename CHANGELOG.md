@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.3.0] — 2026-05-24
+
+### Added
+- Usage quota countdown — footer now shows `resets in 4h 57m` for supported providers
+  - Supported: `anthropic` (OAuth), `openai-codex`, `openrouter`
+  - Unsupported providers (minimax, gemini, xai, custom) silently skip — no error
+  - Background thread fetches after each response; zero latency (cached value on next call)
+  - First call shows nothing; second call onward shows live data
+- `show_reset` config flag (default: `true`) — toggle countdown on/off
+- `show_usage_pct` config flag (default: `false`) — toggle `42% used` display
+- New `usage.py` module — provider mapping, background fetching, cache layer
+
+### Notes
+- Anthropic usage requires OAuth token (Claude.ai login via `hermes auth`), not a raw API key
+- MiniMax, Gemini, and xAI have no public usage quota API — those providers are skipped
+
+---
+
 ## [0.2.0] — 2026-05-24
 
 ### Added
