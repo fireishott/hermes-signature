@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.4.0] — 2026-05-25
+
+### Added
+- Session turn counter — footer now shows `12 turns` (number of LLM turns in the current session)
+  - Counter accumulates for the full session lifetime — never resets between turns
+  - Shows `1 turn` / `N turns` (singular/plural)
+- `show_turns` config flag (default: `true`) — toggle turn counter on/off
+
+---
+
 ## [0.3.0] — 2026-05-24
 
 ### Added
