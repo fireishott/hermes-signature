@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0] — 2026-05-26
+
+### Added
+- Session cost — cumulative spend for the current session shown as `$0.43 ses`
+  - Accumulates across turns like the turn counter — never resets mid-session
+  - `show_session_cost` config flag (default: `true`)
+- Account balance — remaining API balance shown as `$99.48 bal`
+  - Supported providers: `deepseek` (DEEPSEEK_API_KEY), `openrouter` (OPENROUTER_API_KEY)
+  - Fetched in background after each response; zero latency (cached value on next call)
+  - `show_balance` config flag (default: `true`)
+
+---
+
 ## [0.5.2] — 2026-05-26
 
 ### Changed

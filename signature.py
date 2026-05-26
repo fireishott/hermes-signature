@@ -24,10 +24,12 @@ Config (config.yaml):
       show_tokens: true
       show_cost: true
       show_tools: true
-      show_turns: true     # number of turns in this session
-      show_aux: true       # show aux model line derived from aux_tool_models map
-      show_reset: true     # resets in Xh Ym (anthropic, openai-codex, openrouter)
-      show_usage_pct: false # X% used (same providers; off by default)
+      show_turns: true        # number of turns in this session
+      show_aux: true          # show aux model line derived from aux_tool_models map
+      show_session_cost: true # cumulative spend for the current session
+      show_balance: true      # account balance remaining (deepseek, openrouter)
+      show_reset: true        # resets in Xh Ym (anthropic, openai-codex, openrouter)
+      show_usage_pct: false   # X% used (same providers; off by default)
       platforms: []        # empty = all; ["discord", "bluebubbles"] to restrict
       aux_tool_models:     # map tool name → backing model for the 🔩 line
         vision_analyze: "gemini-2.5-flash-lite"
@@ -44,7 +46,7 @@ import time
 from typing import Any
 
 from .pricing import estimate_cost
-from .usage import get_reset_label, get_usage_label, refresh_in_background
+from .usage import get_balance_label, get_reset_label, get_usage_label, refresh_in_background
 
 # Per-session token accumulator: {session_id: {model: {"prompt": int, "completion": int}}}
 _session_usage: dict[str, dict[str, dict[str, int]]] = {}
@@ -65,6 +67,10 @@ _aux_lock = threading.Lock()
 # Per-session turn counter: {session_id: int} — never reset, accumulates for session lifetime
 _session_turns: dict[str, int] = {}
 _turns_lock = threading.Lock()
+
+# Per-session cost accumulator: {session_id: float} — never reset, accumulates for session lifetime
+_session_cost: dict[str, float] = {}
+_session_cost_lock = threading.Lock()
 
 
 def _load_config() -> dict:
@@ -151,10 +157,12 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     show_tokens    = cfg.get("show_tokens", True)
     show_cost      = cfg.get("show_cost", True)
     show_tools     = cfg.get("show_tools", True)
-    show_turns     = cfg.get("show_turns", True)
-    show_aux       = cfg.get("show_aux", True)
-    show_reset     = cfg.get("show_reset", True)
-    show_usage_pct = cfg.get("show_usage_pct", False)
+    show_turns        = cfg.get("show_turns", True)
+    show_aux          = cfg.get("show_aux", True)
+    show_session_cost = cfg.get("show_session_cost", True)
+    show_balance      = cfg.get("show_balance", True)
+    show_reset        = cfg.get("show_reset", True)
+    show_usage_pct    = cfg.get("show_usage_pct", False)
 
     provider = kwargs.get("provider", "")
 
@@ -202,6 +210,16 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
                     parts.append("<$0.0001")
                 else:
                     parts.append(f"~${cost:.4f}")
+                # Accumulate into session total (never resets)
+                with _session_cost_lock:
+                    _session_cost[session_id] = _session_cost.get(session_id, 0.0) + (cost or 0.0)
+
+    # Session cumulative cost
+    if show_session_cost:
+        with _session_cost_lock:
+            ses_cost = _session_cost.get(session_id, 0.0)
+        if ses_cost > 0.0:
+            parts.append(f"${ses_cost:.4f} ses")
 
     # Turn counter
     if show_turns:
@@ -221,8 +239,14 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
         if label:
             parts.append(label)
 
+    # Account balance — read from cache
+    if show_balance:
+        label = get_balance_label(provider)
+        if label:
+            parts.append(label)
+
     # Kick off background refresh so the NEXT call has fresh data
-    refresh_in_background(provider)
+    refresh_in_background(provider, fetch_balance=show_balance)
 
     footer = "-# " + " · ".join(parts)
 
