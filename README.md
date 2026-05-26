@@ -1,30 +1,37 @@
 # hermes-signature
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.6.3-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Hermes](https://img.shields.io/badge/hermes--agent-compatible-gold?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
 ![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux-lightgrey?style=flat-square)
 
-A lightweight [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin that appends a signature footer to every LLM response — showing model, provider, estimated latency, token usage, and cost.
+A lightweight [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin that appends a signature footer to every LLM response.
 
 ```
--# ⚡ hermes · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
--# 🔧 web_search×2 · bash · read_file
+-# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 trn · $0.43 ses · 12 turns · resets in 4h 57m · $99.48 bal
+-# 🔧 web_search×3 · bash×2 · vision_analyze×3
+-# 🔩 gemini-2.5-flash-lite×3
 ```
 
-No patching of Hermes core. Survives `hermes update`. Pure plugin via the native `transform_llm_output` hook.
+No patching of Hermes core. Survives `hermes update`. Pure plugin via native hooks.
 
 ---
 
 ## Features
 
 - **Model & provider** — shows exactly what handled the turn
-- **Estimated latency** — measured from `pre_llm_call` hook entry, clearly labelled `est.`
-- **Token usage** — accumulated across all API calls in the turn (including tool calls)
-- **Cost estimate** — computed from a built-in pricing table, overridable per model
-- **Platform filtering** — show footer only on specific platforms (Discord, BlueBubbles, etc.)
-- **Fully configurable** — icon, agent name, show/hide each field individually
+- **Estimated latency** — measured from `pre_llm_call` to response, labelled `est.`
+- **Token usage** — accumulated across all API calls in the turn; shows `input↑ output↓` split and/or total, independently togglable
+- **Per-turn cost** — computed from a built-in pricing table, labelled `trn`; overridable per model in config
+- **Session cost** — cumulative spend for the full session, labelled `ses`
+- **Session turn counter** — number of LLM turns since session start
+- **Tool call line** — every tool used in the turn with call counts (`🔧 bash×3 · read_file`)
+- **Aux model line** — tracks calls to backing models (vision, MCP, local LLM) via a config map; shown as `🔩 gemini-2.5-flash-lite×3`
+- **Usage quota** — `resets in 4h 57m` and/or `42% used` for supported providers (Anthropic OAuth, OpenAI Codex, OpenRouter)
+- **Account balance** — `$99.48 bal` for DeepSeek and OpenRouter; fetched in background at zero latency
+- **Configurable field order** — reorder any footer field via `order:` list in config
+- **Platform filtering** — restrict footer to specific platforms (Discord, BlueBubbles, etc.)
 - **Local models = free** — Ollama/local models show `free` instead of a cost
 
 ---
@@ -32,14 +39,19 @@ No patching of Hermes core. Survives `hermes update`. Pure plugin via the native
 ## Install
 
 ```bash
-git clone https://github.com/fih/hermes-signature
+git clone https://github.com/fireishott/hermes-signature ~/.hermes/plugins/hermes-signature
+hermes gateway restart
+```
+
+Or use the included installer which also appends a starter config block:
+
+```bash
+git clone https://github.com/fireishott/hermes-signature
 cd hermes-signature
 chmod +x install.sh
 ./install.sh
 hermes gateway restart
 ```
-
-The installer copies the plugin into `~/.hermes/hermes-agent/plugins/` and appends a starter config block to `~/.hermes/config.yaml`.
 
 ---
 
@@ -48,17 +60,53 @@ The installer copies the plugin into `~/.hermes/hermes-agent/plugins/` and appen
 ```yaml
 signature:
   enabled: true
-  agent_name: "hermes"     # Label shown at the start of the footer
-  icon: "⚡"               # Leading icon/emoji
-  show_model: true          # Include model name
-  show_provider: true       # Include provider name
-  show_latency: true        # Include ~Xs est. latency
-  show_tokens: true         # Include total token count
-  show_cost: true           # Include estimated cost
-  show_tools: true          # Include tool call line (🔧 tool×N)
-  platforms: []             # Restrict to platforms; empty = all
-                            # e.g. ["discord", "bluebubbles"]
-  pricing:                  # Optional per-model price overrides (USD/1M tokens)
+  agent_name: "hermes"          # Label shown at the start of the footer
+  icon: "⚡"                    # Leading icon/emoji
+  default_model: ""             # Fallback model name when framework doesn't pass one
+
+  # Field toggles
+  show_model: true
+  show_provider: true
+  show_latency: true
+  show_tokens: true             # Master toggle for all token display
+  show_tokens_direction: true   # Show 1,247↑ 600↓ input/output split
+  show_tokens_total: true       # Show 1,847 tok combined count
+  show_cost: true               # Per-turn cost (~$0.0004 trn)
+  show_session_cost: true       # Cumulative session cost ($0.43 ses)
+  show_turns: true              # Turn counter (12 turns)
+  show_usage_pct: false         # Quota usage percentage (42% used)
+  show_reset: true              # Quota reset countdown (resets in 4h 57m)
+  show_balance: true            # Account balance ($99.48 bal)
+  show_tools: true              # Tool call line (🔧 bash×3)
+  show_aux: true                # Aux model line (🔩 gemini-2.5-flash-lite×3)
+
+  # Field order — controls left-to-right order on the primary line
+  # Omit entirely to use the default order. Fields not listed are hidden.
+  order:
+    - model
+    - provider
+    - latency
+    - tokens_direction
+    - tokens_total
+    - cost
+    - session_cost
+    - turns
+    - usage_pct
+    - reset
+    - balance
+    - tools
+    - aux
+
+  platforms: []                 # Restrict to platforms; empty = all
+                                # e.g. ["discord", "bluebubbles"]
+
+  # Map tool name → backing model for the 🔩 aux line
+  # Use this for tools that call a secondary LLM internally
+  aux_tool_models:
+    vision_analyze: "gemini-2.5-flash-lite"
+    video_analyze: "gemini-2.5-flash-lite"
+
+  pricing:                      # Optional per-model price overrides (USD/1M tokens)
     MiniMax-M2.7:
       input: 0.30
       output: 1.10
@@ -71,25 +119,52 @@ See [docs/configuration.md](docs/configuration.md) for the full reference.
 ## Footer Format
 
 ```
--# {icon} {agent_name} · {model} · {provider} · ~{latency}s est. · {input}↑ {output}↓ {total} tok · ~${cost}
+-# {icon} {agent_name} · {model} · {provider} · ~{latency} · {input}↑ {output}↓ · {total} tok · ~${cost} trn · ${session} ses · {N} turns · {reset} · ${balance} bal
 -# 🔧 {tool}×{n} · {tool} · ...
+-# 🔩 {aux_model}×{n} · ...
 ```
 
-The `-#` prefix renders as small dimmed text in Discord. Each field is optional and can be toggled independently.
+The `-#` prefix renders as small dimmed text in Discord. All three lines are optional. Every field can be toggled independently, and the order of fields on the primary line is configurable.
 
 See [docs/footer-format.md](docs/footer-format.md) for format details and platform rendering notes.
 
 ---
 
-## Examples
+## Aux Model Tracking
 
-See [docs/examples.md](docs/examples.md) for example footers across different configurations and platforms.
+Hermes aux calls (vision, MCP tools, local LLMs) bypass the `post_api_request` hook, so the plugin can't see their token usage directly. Instead, configure a `aux_tool_models` map that links tool names to their backing models. When those tools are called, the plugin counts them and renders the `🔩` line.
+
+```yaml
+aux_tool_models:
+  vision_analyze: "gemini-2.5-flash-lite"
+  browser_vision: "gemini-flash-latest"
+  web_extract: "gemini-2.5-flash-lite"
+```
+
+This means no token counts for aux models — just call counts. That's an acceptable trade-off to keep the plugin fully self-contained.
+
+---
+
+## Usage Quota & Balance
+
+Background threads fetch quota and balance data after each response so the *next* call shows live data at zero latency. First call shows nothing; second call onward shows cached data.
+
+**Quota (reset countdown + usage %):**
+- `anthropic` — requires OAuth token (Claude.ai login via `hermes auth`), not a raw API key
+- `openai-codex` — Codex OAuth
+- `openrouter` — `OPENROUTER_API_KEY`
+
+**Balance:**
+- `deepseek` — `DEEPSEEK_API_KEY`
+- `openrouter` — `OPENROUTER_API_KEY`
+
+API keys are read from `os.environ` first, then from `~/.hermes/.env` as fallback.
 
 ---
 
 ## Pricing Table
 
-Built-in rates are included for MiniMax, Gemini, Anthropic, OpenAI, and local Ollama models (always `free`). Override any model in config. See [docs/pricing.md](docs/pricing.md) for the full table.
+Built-in rates are included for MiniMax, Gemini, Anthropic, OpenAI, DeepSeek, and local Ollama models (always `free`). Override any model in config. See [docs/pricing.md](docs/pricing.md) for the full table.
 
 ---
 
