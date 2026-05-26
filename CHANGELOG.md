@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0] — 2026-05-25
+
+### Added
+- Aux model tracking — footer now shows a separate `-# 🔩` line for each aux model called in a turn (vision, MCP, local LLM, etc.)
+  - Token usage and cost are reported per aux model
+  - Aux lines appear between the primary footer and the tool line
+- `show_aux` config flag (default: `true`) — toggle aux model lines on/off
+- `default_model` config key — fallback model name shown in footer when the framework doesn't pass one in hook kwargs
+- Token accumulator is now keyed per model — `post_api_request` buckets usage by model name so primary vs aux are tracked independently
+
+---
+
 ## [0.4.0] — 2026-05-25
 
 ### Added
