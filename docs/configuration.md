@@ -11,12 +11,14 @@ signature:
   enabled: true             # Master switch. false = plugin is silent.
   agent_name: "hermes"      # Label shown at the start of every footer.
   icon: "⚡"                # Leading character(s). Any emoji or text.
+  default_model: ""         # Fallback model name when Hermes doesn't pass one.
 
   show_model: true          # Include model name in footer.
   show_provider: true       # Include provider name in footer.
   show_latency: true        # Include ~Xs est. latency.
   show_tokens: true         # Include total token count.
   show_cost: true           # Include estimated cost.
+  show_aux: true            # Show aux model lines (vision, MCP calls, etc.).
 
   platforms: []             # Restrict footer to these platforms.
                             # Empty list = all platforms.
