@@ -1,5 +1,5 @@
 name: hermes-signature
-version: 0.6.0
+version: 0.6.1
 kind: standalone
 description: Appends a lightweight signature footer to every Hermes response.
 author: FIH / Ignyte

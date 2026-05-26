@@ -21,7 +21,9 @@ Config (config.yaml):
       show_model: true
       show_provider: true
       show_latency: true
-      show_tokens: true
+      show_tokens: true           # master toggle for token display
+      show_tokens_direction: true # show input↑ / output↓ counts separately
+      show_tokens_total: true     # show combined total token count
       show_cost: true
       show_tools: true
       show_turns: true        # number of turns in this session
@@ -154,7 +156,9 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     show_model     = cfg.get("show_model", True)
     show_provider  = cfg.get("show_provider", True)
     show_latency   = cfg.get("show_latency", True)
-    show_tokens    = cfg.get("show_tokens", True)
+    show_tokens           = cfg.get("show_tokens", True)
+    show_tokens_direction = cfg.get("show_tokens_direction", True)
+    show_tokens_total     = cfg.get("show_tokens_total", True)
     show_cost      = cfg.get("show_cost", True)
     show_tools     = cfg.get("show_tools", True)
     show_turns        = cfg.get("show_turns", True)
@@ -199,7 +203,10 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
         total_tok = prompt_tok + completion_tok
 
         if show_tokens and total_tok:
-            parts.append(f"{prompt_tok:,}↑ {completion_tok:,}↓ {total_tok:,} tok")
+            if show_tokens_direction:
+                parts.append(f"{prompt_tok:,}↑ {completion_tok:,}↓")
+            if show_tokens_total:
+                parts.append(f"{total_tok:,} tok")
 
         if show_cost:
             cost = estimate_cost(model, prompt_tok, completion_tok, custom_pricing)

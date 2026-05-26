@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.1] — 2026-05-26
+
+### Added
+- Token display sub-flags — `show_tokens` remains the master toggle; two new flags for granular control:
+  - `show_tokens_direction` (default: `true`) — show `1,247↑ 600↓` input/output split
+  - `show_tokens_total` (default: `true`) — show `1,847 tok` combined count
+  - Both default `true` so existing behavior is unchanged
+
+---
+
 ## [0.6.0] — 2026-05-26
 
 ### Added
