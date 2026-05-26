@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.6.4] — 2026-05-26
+
+### Fixed
+- Balance and provider not showing when framework omits `provider` kwarg in `transform_llm_output` — add `default_provider` config key as fallback (mirrors `default_model`)
+
+### Added
+- `default_provider` config key — used when framework doesn't pass a provider name in hook kwargs
+
+---
+
 ## [0.6.3] — 2026-05-26
 
 ### Fixed

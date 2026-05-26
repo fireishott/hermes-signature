@@ -195,9 +195,11 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     order: list[str] = cfg.get("order", _DEFAULT_ORDER)
     custom_pricing = cfg.get("pricing")
 
-    # Fall back to configured default when the framework doesn't pass a model name
+    # Fall back to configured defaults when the framework doesn't pass model/provider
     if not model:
         model = cfg.get("default_model", "")
+    if not provider:
+        provider = cfg.get("default_provider", "")
 
     # ── Compute all field values upfront ────────────────────────────────────
 
