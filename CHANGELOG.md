@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.3] — 2026-05-26
+
+### Fixed
+- Balance not showing — API key reads now fall back to `~/.hermes/.env` when `os.environ` doesn't have it (gateway may not propagate env to plugin threads)
+- Per-turn cost now labeled as `~$0.0271 trn` to distinguish it from session cost (`$0.43 ses`)
+
+---
+
 ## [0.6.2] — 2026-05-26
 
 ### Added

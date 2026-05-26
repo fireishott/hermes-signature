@@ -239,9 +239,9 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
                 if cost == 0.0:
                     f["cost"] = "free"
                 elif cost < 0.0001:
-                    f["cost"] = "<$0.0001"
+                    f["cost"] = "<$0.0001 trn"
                 else:
-                    f["cost"] = f"~${cost:.4f}"
+                    f["cost"] = f"~${cost:.4f} trn"
                 with _session_cost_lock:
                     _session_cost[session_id] = _session_cost.get(session_id, 0.0) + cost
 

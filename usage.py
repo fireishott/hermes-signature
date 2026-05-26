@@ -68,11 +68,28 @@ def _fetch_and_cache(usage_provider: str, base_url: Optional[str] = None, api_ke
         pass
 
 
+def _load_env_key(key: str) -> str:
+    """Read an API key from os.environ, falling back to ~/.hermes/.env."""
+    val = os.environ.get(key, "")
+    if val:
+        return val
+    from pathlib import Path
+    env_path = Path.home() / ".hermes" / ".env"
+    try:
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line.startswith(f"{key}="):
+                return line.split("=", 1)[1].strip().strip("\"'")
+    except Exception:
+        pass
+    return ""
+
+
 def _fetch_deepseek_balance() -> Optional[float]:
     try:
         import urllib.request
         import json
-        api_key = os.environ.get("DEEPSEEK_API_KEY", "")
+        api_key = _load_env_key("DEEPSEEK_API_KEY")
         if not api_key:
             return None
         req = urllib.request.Request(
@@ -93,7 +110,7 @@ def _fetch_openrouter_balance(api_key: Optional[str] = None) -> Optional[float]:
     try:
         import urllib.request
         import json
-        key = api_key or os.environ.get("OPENROUTER_API_KEY", "")
+        key = api_key or _load_env_key("OPENROUTER_API_KEY")
         if not key:
             return None
         req = urllib.request.Request(
