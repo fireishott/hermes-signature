@@ -3,8 +3,8 @@ hermes-signature — appends a configurable signature footer to every LLM respon
 
 Footer example:
     -# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 · 12 turns
-    -# 🔩 gemini-2.5-flash-lite · 200↑ 50↓ 250 tok · free
     -# 🔧 web_search×3 · bash×2 · read_file
+    -# 🔩 gemini-2.5-flash-lite · 200↑ 50↓ 250 tok · free
 
 Hooks used:
     pre_llm_call         — record turn start time, reset accumulators
@@ -216,6 +216,12 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     footer = "-# " + " · ".join(parts)
 
+    if show_tools and tools:
+        tool_parts = []
+        for name, count in tools.items():
+            tool_parts.append(f"{name}×{count}" if count > 1 else name)
+        footer += "\n-# 🔧 " + " · ".join(tool_parts)
+
     if show_aux and aux_usage:
         for aux_model, aux_tok in aux_usage.items():
             aux_parts: list[str] = [aux_model]
@@ -233,11 +239,5 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
                     else:
                         aux_parts.append(f"~${aux_cost:.4f}")
             footer += "\n-# 🔩 " + " · ".join(aux_parts)
-
-    if show_tools and tools:
-        tool_parts = []
-        for name, count in tools.items():
-            tool_parts.append(f"{name}×{count}" if count > 1 else name)
-        footer += "\n-# 🔧 " + " · ".join(tool_parts)
 
     return response_text + "\n\n" + footer

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1] — 2026-05-26
+
+### Changed
+- Aux model lines (`-# 🔩`) now appear after the tool call line (`-# 🔧`) instead of before it
+
+---
+
 ## [0.5.0] — 2026-05-25
 
 ### Added
