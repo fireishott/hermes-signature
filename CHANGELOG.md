@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.2] — 2026-05-26
+
+### Changed
+- Aux model tracking is now plugin-only — uses `aux_tool_models` config map (tool name → model) instead of requiring framework hook support
+- `on_post_tool_call` maps known tools to their backing models and counts calls per model
+- Aux line renders as `-# 🔩 gemini-2.5-flash-lite×3` (same count style as tools line) — no token data since aux calls bypass `post_api_request`
+- Removed dead code path that attempted to split aux usage from `post_api_request` (framework never fires that hook for aux calls)
+
+### Added
+- `aux_tool_models` config key — map any tool name to its backing model
+
+---
+
 ## [0.5.1] — 2026-05-26
 
 ### Changed

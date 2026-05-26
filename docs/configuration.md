@@ -18,7 +18,9 @@ signature:
   show_latency: true        # Include ~Xs est. latency.
   show_tokens: true         # Include total token count.
   show_cost: true           # Include estimated cost.
-  show_aux: true            # Show aux model lines (vision, MCP calls, etc.).
+  show_aux: true            # Show aux model line derived from aux_tool_models map.
+  aux_tool_models:          # Map tool name → backing model for the 🔩 line.
+    vision_analyze: "gemini-2.5-flash-lite"
 
   platforms: []             # Restrict footer to these platforms.
                             # Empty list = all platforms.

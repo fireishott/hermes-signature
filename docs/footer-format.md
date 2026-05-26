@@ -79,7 +79,14 @@ Same as BlueBubbles — plain text, `-#` is literal. Works fine as a visible foo
 
 ## Examples by Field Combination
 
-All fields on:
+All fields on, with tools and aux model:
+```
+-# ⚡ hermes · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 · 4 turns
+-# 🔧 web_search×3 · vision_analyze×3
+-# 🔩 gemini-2.5-flash-lite×3
+```
+
+All fields on, no aux:
 ```
 -# ⚡ hermes · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
 ```

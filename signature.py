@@ -3,13 +3,13 @@ hermes-signature — appends a configurable signature footer to every LLM respon
 
 Footer example:
     -# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 · 12 turns
-    -# 🔧 web_search×3 · bash×2 · read_file
-    -# 🔩 gemini-2.5-flash-lite · 200↑ 50↓ 250 tok · free
+    -# 🔧 web_search×3 · bash×2 · vision_analyze×3
+    -# 🔩 gemini-2.5-flash-lite×3
 
 Hooks used:
     pre_llm_call         — record turn start time, reset accumulators
     post_api_request     — accumulate token usage per model per session
-    post_tool_call       — accumulate tool call counts per session
+    post_tool_call       — accumulate tool call counts; map aux tools to backing models
     transform_llm_output — build and append footer
 
 Config (config.yaml):
@@ -25,10 +25,12 @@ Config (config.yaml):
       show_cost: true
       show_tools: true
       show_turns: true     # number of turns in this session
-      show_aux: true       # show aux model footer lines (vision, MCP, etc.)
+      show_aux: true       # show aux model line derived from aux_tool_models map
       show_reset: true     # resets in Xh Ym (anthropic, openai-codex, openrouter)
       show_usage_pct: false # X% used (same providers; off by default)
       platforms: []        # empty = all; ["discord", "bluebubbles"] to restrict
+      aux_tool_models:     # map tool name → backing model for the 🔩 line
+        vision_analyze: "gemini-2.5-flash-lite"
       pricing:             # optional overrides (USD per 1M tokens)
         MiniMax-M2.7:
           input: 0.30
@@ -56,6 +58,10 @@ _start_lock = threading.Lock()
 _session_tools: dict[str, dict[str, int]] = {}
 _tools_lock = threading.Lock()
 
+# Per-session aux model call counts derived from tool map: {session_id: {model: count}}
+_session_aux_models: dict[str, dict[str, int]] = {}
+_aux_lock = threading.Lock()
+
 # Per-session turn counter: {session_id: int} — never reset, accumulates for session lifetime
 _session_turns: dict[str, int] = {}
 _turns_lock = threading.Lock()
@@ -79,6 +85,8 @@ def on_pre_llm_call(**kwargs: Any) -> None:
         _session_usage[session_id] = {}
     with _tools_lock:
         _session_tools[session_id] = {}
+    with _aux_lock:
+        _session_aux_models[session_id] = {}
     with _turns_lock:
         _session_turns[session_id] = _session_turns.get(session_id, 0) + 1
 
@@ -100,14 +108,23 @@ def on_post_api_request(**kwargs: Any) -> None:
 
 
 def on_post_tool_call(**kwargs: Any) -> None:
-    """Accumulate tool call counts for this turn."""
+    """Accumulate tool call counts; track aux model usage via tool→model config map."""
     session_id = kwargs.get("session_id", "") or ""
     tool_name = kwargs.get("tool_name", "") or ""
     if not tool_name:
         return
+
     with _tools_lock:
         bucket = _session_tools.setdefault(session_id, {})
         bucket[tool_name] = bucket.get(tool_name, 0) + 1
+
+    cfg = _load_config()
+    aux_tool_models: dict = cfg.get("aux_tool_models", {})
+    backing_model = aux_tool_models.get(tool_name)
+    if backing_model:
+        with _aux_lock:
+            aux_bucket = _session_aux_models.setdefault(session_id, {})
+            aux_bucket[backing_model] = aux_bucket.get(backing_model, 0) + 1
 
 
 def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
@@ -161,15 +178,12 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
             elapsed = time.monotonic() - start
             parts.append(f"~{elapsed:.1f}s est.")
 
-    # Tokens + cost — split primary model from aux models
+    # Tokens + cost (primary model only — aux calls don't fire post_api_request)
     with _usage_lock:
         all_usage = _session_usage.pop(session_id, {})
 
     custom_pricing = cfg.get("pricing")
-
-    # Primary model usage: keyed by model name, or fall back to _unattributed
     primary_usage = all_usage.pop(model, None) or all_usage.pop("_unattributed", None)
-    aux_usage = all_usage  # everything else is aux (vision, MCP calls, etc.)
 
     if primary_usage:
         prompt_tok = primary_usage["prompt"]
@@ -188,10 +202,6 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
                     parts.append("<$0.0001")
                 else:
                     parts.append(f"~${cost:.4f}")
-
-    # Tool calls
-    with _tools_lock:
-        tools = _session_tools.pop(session_id, None)
 
     # Turn counter
     if show_turns:
@@ -216,28 +226,24 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     footer = "-# " + " · ".join(parts)
 
+    # Tool calls
+    with _tools_lock:
+        tools = _session_tools.pop(session_id, None)
+
     if show_tools and tools:
         tool_parts = []
         for name, count in tools.items():
             tool_parts.append(f"{name}×{count}" if count > 1 else name)
         footer += "\n-# 🔧 " + " · ".join(tool_parts)
 
-    if show_aux and aux_usage:
-        for aux_model, aux_tok in aux_usage.items():
-            aux_parts: list[str] = [aux_model]
-            p, c = aux_tok["prompt"], aux_tok["completion"]
-            t = p + c
-            if show_tokens and t:
-                aux_parts.append(f"{p:,}↑ {c:,}↓ {t:,} tok")
-            if show_cost:
-                aux_cost = estimate_cost(aux_model, p, c, custom_pricing)
-                if aux_cost is not None:
-                    if aux_cost == 0.0:
-                        aux_parts.append("free")
-                    elif aux_cost < 0.0001:
-                        aux_parts.append("<$0.0001")
-                    else:
-                        aux_parts.append(f"~${aux_cost:.4f}")
-            footer += "\n-# 🔩 " + " · ".join(aux_parts)
+    # Aux model line — derived from aux_tool_models config map, no token data available
+    with _aux_lock:
+        aux_models = _session_aux_models.pop(session_id, None)
+
+    if show_aux and aux_models:
+        aux_parts = []
+        for aux_model, count in aux_models.items():
+            aux_parts.append(f"{aux_model}×{count}" if count > 1 else aux_model)
+        footer += "\n-# 🔩 " + " · ".join(aux_parts)
 
     return response_text + "\n\n" + footer
