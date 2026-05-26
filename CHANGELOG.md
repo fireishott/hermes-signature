@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.6.2] — 2026-05-26
+
+### Added
+- Configurable footer field order via `order:` list in config
+  - All primary line fields are addressable: `model`, `provider`, `latency`, `tokens_direction`, `tokens_total`, `cost`, `session_cost`, `turns`, `usage_pct`, `reset`, `balance`
+  - Extra lines also orderable: `tools`, `aux`
+  - Omit `order:` entirely to keep the default order unchanged
+  - Fields omitted from the list are hidden regardless of their `show_*` flag
+
+---
+
 ## [0.6.1] — 2026-05-26
 
 ### Added

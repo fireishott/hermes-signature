@@ -32,6 +32,20 @@ Config (config.yaml):
       show_balance: true      # account balance remaining (deepseek, openrouter)
       show_reset: true        # resets in Xh Ym (anthropic, openai-codex, openrouter)
       show_usage_pct: false   # X% used (same providers; off by default)
+      order:                  # footer field order (omit to use default)
+        - model
+        - provider
+        - latency
+        - tokens_direction
+        - tokens_total
+        - cost
+        - session_cost
+        - turns
+        - usage_pct
+        - reset
+        - balance
+        - tools
+        - aux
       platforms: []        # empty = all; ["discord", "bluebubbles"] to restrict
       aux_tool_models:     # map tool name → backing model for the 🔩 line
         vision_analyze: "gemini-2.5-flash-lite"
@@ -135,6 +149,14 @@ def on_post_tool_call(**kwargs: Any) -> None:
             aux_bucket[backing_model] = aux_bucket.get(backing_model, 0) + 1
 
 
+_DEFAULT_ORDER = [
+    "model", "provider", "latency",
+    "tokens_direction", "tokens_total",
+    "cost", "session_cost", "turns",
+    "usage_pct", "reset", "balance",
+]
+
+
 def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     cfg = _load_config()
 
@@ -150,51 +172,54 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     session_id = kwargs.get("session_id", "") or ""
     model = kwargs.get("model", "") or ""
+    provider = kwargs.get("provider", "")
 
-    icon        = cfg.get("icon", "⚡")
-    agent_name  = cfg.get("agent_name", "hermes")
-    show_model     = cfg.get("show_model", True)
-    show_provider  = cfg.get("show_provider", True)
-    show_latency   = cfg.get("show_latency", True)
+    icon       = cfg.get("icon", "⚡")
+    agent_name = cfg.get("agent_name", "hermes")
+
+    show_model            = cfg.get("show_model", True)
+    show_provider         = cfg.get("show_provider", True)
+    show_latency          = cfg.get("show_latency", True)
     show_tokens           = cfg.get("show_tokens", True)
     show_tokens_direction = cfg.get("show_tokens_direction", True)
     show_tokens_total     = cfg.get("show_tokens_total", True)
-    show_cost      = cfg.get("show_cost", True)
-    show_tools     = cfg.get("show_tools", True)
-    show_turns        = cfg.get("show_turns", True)
-    show_aux          = cfg.get("show_aux", True)
-    show_session_cost = cfg.get("show_session_cost", True)
-    show_balance      = cfg.get("show_balance", True)
-    show_reset        = cfg.get("show_reset", True)
-    show_usage_pct    = cfg.get("show_usage_pct", False)
+    show_cost             = cfg.get("show_cost", True)
+    show_session_cost     = cfg.get("show_session_cost", True)
+    show_turns            = cfg.get("show_turns", True)
+    show_usage_pct        = cfg.get("show_usage_pct", False)
+    show_reset            = cfg.get("show_reset", True)
+    show_balance          = cfg.get("show_balance", True)
+    show_tools            = cfg.get("show_tools", True)
+    show_aux              = cfg.get("show_aux", True)
 
-    provider = kwargs.get("provider", "")
+    order: list[str] = cfg.get("order", _DEFAULT_ORDER)
+    custom_pricing = cfg.get("pricing")
 
     # Fall back to configured default when the framework doesn't pass a model name
     if not model:
         model = cfg.get("default_model", "")
 
-    parts: list[str] = [f"{icon} {agent_name}"]
+    # ── Compute all field values upfront ────────────────────────────────────
 
-    if show_model and model:
-        parts.append(model)
+    f: dict[str, str | None] = {k: None for k in _DEFAULT_ORDER}
 
-    if show_provider and provider:
-        parts.append(provider)
+    if show_model:
+        f["model"] = model or None
 
-    # Latency
+    if show_provider:
+        f["provider"] = provider or None
+
     if show_latency:
         with _start_lock:
             start = _turn_start.get(session_id)
         if start:
             elapsed = time.monotonic() - start
-            parts.append(f"~{elapsed:.1f}s est.")
+            f["latency"] = f"~{elapsed:.1f}s est."
 
     # Tokens + cost (primary model only — aux calls don't fire post_api_request)
     with _usage_lock:
         all_usage = _session_usage.pop(session_id, {})
 
-    custom_pricing = cfg.get("pricing")
     primary_usage = all_usage.pop(model, None) or all_usage.pop("_unattributed", None)
 
     if primary_usage:
@@ -204,77 +229,75 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
         if show_tokens and total_tok:
             if show_tokens_direction:
-                parts.append(f"{prompt_tok:,}↑ {completion_tok:,}↓")
+                f["tokens_direction"] = f"{prompt_tok:,}↑ {completion_tok:,}↓"
             if show_tokens_total:
-                parts.append(f"{total_tok:,} tok")
+                f["tokens_total"] = f"{total_tok:,} tok"
 
         if show_cost:
             cost = estimate_cost(model, prompt_tok, completion_tok, custom_pricing)
             if cost is not None:
                 if cost == 0.0:
-                    parts.append("free")
+                    f["cost"] = "free"
                 elif cost < 0.0001:
-                    parts.append("<$0.0001")
+                    f["cost"] = "<$0.0001"
                 else:
-                    parts.append(f"~${cost:.4f}")
-                # Accumulate into session total (never resets)
+                    f["cost"] = f"~${cost:.4f}"
                 with _session_cost_lock:
-                    _session_cost[session_id] = _session_cost.get(session_id, 0.0) + (cost or 0.0)
+                    _session_cost[session_id] = _session_cost.get(session_id, 0.0) + cost
 
-    # Session cumulative cost
     if show_session_cost:
         with _session_cost_lock:
             ses_cost = _session_cost.get(session_id, 0.0)
         if ses_cost > 0.0:
-            parts.append(f"${ses_cost:.4f} ses")
+            f["session_cost"] = f"${ses_cost:.4f} ses"
 
-    # Turn counter
     if show_turns:
         with _turns_lock:
             turn_count = _session_turns.get(session_id, 0)
         if turn_count:
-            parts.append(f"{turn_count} turn" if turn_count == 1 else f"{turn_count} turns")
+            f["turns"] = f"{turn_count} turn" if turn_count == 1 else f"{turn_count} turns"
 
-    # Usage quota — read from cache (populated by background thread on prior call)
     if show_usage_pct:
-        label = get_usage_label(provider)
-        if label:
-            parts.append(label)
+        f["usage_pct"] = get_usage_label(provider)
 
     if show_reset:
-        label = get_reset_label(provider)
-        if label:
-            parts.append(label)
+        f["reset"] = get_reset_label(provider)
 
-    # Account balance — read from cache
     if show_balance:
-        label = get_balance_label(provider)
-        if label:
-            parts.append(label)
+        f["balance"] = get_balance_label(provider)
 
     # Kick off background refresh so the NEXT call has fresh data
     refresh_in_background(provider, fetch_balance=show_balance)
 
+    # ── Assemble primary line in configured order ────────────────────────────
+
+    parts: list[str] = [f"{icon} {agent_name}"]
+    for field in order:
+        val = f.get(field)
+        if val:
+            parts.append(val)
+
     footer = "-# " + " · ".join(parts)
 
-    # Tool calls
+    # ── Extra lines (tools, aux) — order configurable via order list too ─────
+
     with _tools_lock:
         tools = _session_tools.pop(session_id, None)
 
-    if show_tools and tools:
-        tool_parts = []
-        for name, count in tools.items():
-            tool_parts.append(f"{name}×{count}" if count > 1 else name)
-        footer += "\n-# 🔧 " + " · ".join(tool_parts)
-
-    # Aux model line — derived from aux_tool_models config map, no token data available
     with _aux_lock:
         aux_models = _session_aux_models.pop(session_id, None)
 
-    if show_aux and aux_models:
-        aux_parts = []
-        for aux_model, count in aux_models.items():
-            aux_parts.append(f"{aux_model}×{count}" if count > 1 else aux_model)
-        footer += "\n-# 🔩 " + " · ".join(aux_parts)
+    # Respect user-specified order for extra lines if present, else tools then aux
+    extra_order = [f for f in order if f in ("tools", "aux")]
+    if not extra_order:
+        extra_order = ["tools", "aux"]
+
+    for field in extra_order:
+        if field == "tools" and show_tools and tools:
+            tool_parts = [f"{n}×{c}" if c > 1 else n for n, c in tools.items()]
+            footer += "\n-# 🔧 " + " · ".join(tool_parts)
+        elif field == "aux" and show_aux and aux_models:
+            aux_parts = [f"{m}×{c}" if c > 1 else m for m, c in aux_models.items()]
+            footer += "\n-# 🔩 " + " · ".join(aux_parts)
 
     return response_text + "\n\n" + footer
