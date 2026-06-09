@@ -26,11 +26,14 @@ from typing import Optional
 
 # Hermes provider name → account_usage provider key
 _PROVIDER_MAP: dict[str, str] = {
-    "anthropic":    "anthropic",
-    "claude":       "anthropic",
-    "openai-codex": "openai-codex",
-    "codex":        "openai-codex",
-    "openrouter":   "openrouter",
+    "anthropic":       "anthropic",
+    "claude":          "anthropic",
+    "openai-codex":    "openai-codex",
+    "codex":           "openai-codex",
+    "openrouter":      "openrouter",
+    "custom:openrouter": "openrouter",
+    "deepseek":        "deepseek",
+    "custom:deepseek": "deepseek",
 }
 
 # Cache: usage_provider_key → (reset_at, used_percent)
@@ -131,9 +134,9 @@ def _fetch_openrouter_balance(api_key: Optional[str] = None) -> Optional[float]:
 def _fetch_balance_and_cache(hermes_provider: str, api_key: Optional[str] = None) -> None:
     provider = (hermes_provider or "").lower().strip()
     balance: Optional[float] = None
-    if provider == "deepseek":
+    if provider == "deepseek" or provider == "custom:deepseek":
         balance = _fetch_deepseek_balance()
-    elif provider == "openrouter":
+    elif "openrouter" in provider:
         balance = _fetch_openrouter_balance(api_key)
     if balance is not None:
         with _balance_lock:

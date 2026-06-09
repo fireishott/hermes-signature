@@ -1,6 +1,6 @@
 # hermes-signature
 
-![Version](https://img.shields.io/badge/version-0.6.3-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.6.5-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Hermes](https://img.shields.io/badge/hermes--agent-compatible-gold?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -152,11 +152,11 @@ Background threads fetch quota and balance data after each response so the *next
 **Quota (reset countdown + usage %):**
 - `anthropic` — requires OAuth token (Claude.ai login via `hermes auth`), not a raw API key
 - `openai-codex` — Codex OAuth
-- `openrouter` — `OPENROUTER_API_KEY`
+- `openrouter` — `OPENROUTER_API_KEY` (also supports `custom:openrouter`)
 
 **Balance:**
-- `deepseek` — `DEEPSEEK_API_KEY`
-- `openrouter` — `OPENROUTER_API_KEY`
+- `deepseek` — `DEEPSEEK_API_KEY` (also supports `custom:deepseek`)
+- `openrouter` — `OPENROUTER_API_KEY` (also supports `custom:openrouter`)
 
 API keys are read from `os.environ` first, then from `~/.hermes/.env` as fallback.
 

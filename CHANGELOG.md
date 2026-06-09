@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.5] — 2026-06-08
+
+### Fixed
+- Balance and usage quota not showing for `custom:openrouter` and `custom:deepseek` providers — updated provider mapping and balance fetch logic to handle the `custom:` prefix correctly.
+
+---
+
 ## [0.6.4] — 2026-05-26
 
 ### Fixed
