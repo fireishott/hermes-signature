@@ -17,6 +17,7 @@ signature:
   show_provider: true       # Include provider name in footer.
   show_latency: true        # Include ~Xs est. latency.
   show_tokens: true         # Include total token count.
+  show_cached: true         # Include cached token count.
   show_cost: true           # Include estimated cost.
   show_aux: true            # Show aux model line derived from aux_tool_models map.
   aux_tool_models:          # Map tool name → backing model for the 🔩 line.
@@ -66,14 +67,14 @@ Any string placed before `agent_name`. Typically a single emoji, but can be any 
 ### `show_model`
 **Type:** `bool` | **Default:** `true`
 
-Includes the model name (e.g. `MiniMax-M2.7`, `claude-sonnet-4-6`) in the footer. The model name comes from Hermes's `model` kwarg passed to `transform_llm_output`.
+Includes the model name (e.g. `mimo-v2.5-pro`, `claude-sonnet-4-6`) in the footer. The model name comes from Hermes's `model` kwarg passed to `transform_llm_output`.
 
 ---
 
 ### `show_provider`
 **Type:** `bool` | **Default:** `true`
 
-Includes the provider name (e.g. `minimax`, `anthropic`, `openai`) if available.
+Includes the provider name (e.g. `xiaomi`, `anthropic`, `openai`) if available.
 
 ---
 
@@ -92,6 +93,17 @@ Format: `~1.4s est.`
 Includes total tokens for the turn (prompt + completion, summed across all API calls including tool call rounds).
 
 Format: `1,247↑ 600↓ 1,847 tok` (input↑ completion↓ total)
+
+---
+
+### `show_cached`
+**Type:** `bool` | **Default:** `true`
+
+Shows the number of cached input tokens reported by the API (via `prompt_tokens_details.cached_tokens`). Only appears when cached tokens > 0.
+
+Format: `800 cached`
+
+Cached tokens are billed at a cheaper rate than regular input. When present, the cost calculation splits them: non-cached input at the regular `input` rate, cached input at the `cache` rate. Models without a `cache` rate in the pricing table fall back to the regular `input` rate.
 
 ---
 
@@ -126,9 +138,10 @@ Override pricing for specific models. Keys are model names (case-insensitive pre
 
 ```yaml
 pricing:
-  MiniMax-M2.7:
-    input: 0.30
-    output: 1.10
+  mimo-v2.5-pro:
+    input: 0.435
+    output: 0.870
+    cache: 0.0036
   my-fine-tune:
     input: 2.00
     output: 8.00

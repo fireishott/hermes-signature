@@ -2,7 +2,7 @@
 hermes-signature — appends a configurable signature footer to every LLM response.
 
 Footer example:
-    -# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 · 12 turns
+    -# 🔥 ignyte · mimo-v2.5-pro · xiaomi · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 trn · 12 turns
     -# 🔧 web_search×3 · bash×2 · vision_analyze×3
     -# 🔩 gemini-2.5-flash-lite×3
 
@@ -17,13 +17,14 @@ Config (config.yaml):
       enabled: true
       agent_name: "ignyte"
       icon: "⚡"
-      default_model: "MiniMax-M2.7"  # fallback when model not in hook kwargs
+      default_model: "mimo-v2.5-pro"  # fallback when model not in hook kwargs
       show_model: true
       show_provider: true
       show_latency: true
       show_tokens: true           # master toggle for token display
       show_tokens_direction: true # show input↑ / output↓ counts separately
       show_tokens_total: true     # show combined total token count
+      show_cached: true           # show cached token count (e.g., "500 cached")
       show_cost: true
       show_tools: true
       show_turns: true        # number of turns in this session
@@ -38,6 +39,7 @@ Config (config.yaml):
         - latency
         - tokens_direction
         - tokens_total
+        - cached
         - cost
         - session_cost
         - turns
@@ -50,9 +52,9 @@ Config (config.yaml):
       aux_tool_models:     # map tool name → backing model for the 🔩 line
         vision_analyze: "gemini-2.5-flash-lite"
       pricing:             # optional overrides (USD per 1M tokens)
-        MiniMax-M2.7:
-          input: 0.30
-          output: 1.10
+        mimo-v2.5-pro:
+          input: 0.435
+          output: 0.870
 """
 
 from __future__ import annotations
@@ -123,11 +125,17 @@ def on_post_api_request(**kwargs: Any) -> None:
     model = kwargs.get("model", "") or "_unattributed"
     prompt = usage.get("prompt_tokens") or usage.get("input_tokens") or 0
     completion = usage.get("completion_tokens") or usage.get("output_tokens") or 0
+    # Extract cached tokens from OpenAI-compatible usage detail
+    cached = 0
+    details = usage.get("prompt_tokens_details") or {}
+    if isinstance(details, dict):
+        cached = int(details.get("cached_tokens") or 0)
     with _usage_lock:
         session_bucket = _session_usage.setdefault(session_id, {})
-        model_bucket = session_bucket.setdefault(model, {"prompt": 0, "completion": 0})
+        model_bucket = session_bucket.setdefault(model, {"prompt": 0, "completion": 0, "cached": 0})
         model_bucket["prompt"] += prompt
         model_bucket["completion"] += completion
+        model_bucket["cached"] += cached
 
 
 def on_post_tool_call(**kwargs: Any) -> None:
@@ -152,7 +160,7 @@ def on_post_tool_call(**kwargs: Any) -> None:
 
 _DEFAULT_ORDER = [
     "model", "provider", "latency",
-    "tokens_direction", "tokens_total",
+    "tokens_direction", "tokens_total", "cached",
     "cost", "session_cost", "turns",
     "usage_pct", "reset", "balance",
 ]
@@ -186,6 +194,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     show_tokens           = cfg.get("show_tokens", True)
     show_tokens_direction = cfg.get("show_tokens_direction", True)
     show_tokens_total     = cfg.get("show_tokens_total", True)
+    show_cached           = cfg.get("show_cached", True)
     show_cost             = cfg.get("show_cost", True)
     show_session_cost     = cfg.get("show_session_cost", True)
     show_turns            = cfg.get("show_turns", True)
@@ -256,10 +265,12 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
         prompt_tok = wrapper_prompt_tok
         completion_tok = wrapper_completion_tok
         total_tok = wrapper_total_tok
+        cached_tok = 0
         if not total_tok and primary_usage:
             prompt_tok = primary_usage["prompt"]
             completion_tok = primary_usage["completion"]
             total_tok = prompt_tok + completion_tok
+            cached_tok = primary_usage.get("cached", 0)
 
         if show_tokens and total_tok:
             if show_tokens_direction:
@@ -267,10 +278,13 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
             if show_tokens_total:
                 f["tokens_total"] = f"{total_tok:,} tok"
 
+        if show_cached and cached_tok:
+            f["cached"] = f"{cached_tok:,} cached"
+
         if show_cost:
             cost = turn_cost_usd
             if cost is None:
-                cost = estimate_cost(model, prompt_tok, completion_tok, custom_pricing)
+                cost = estimate_cost(model, prompt_tok, completion_tok, custom_pricing, cached_tokens=cached_tok)
             if cost is not None:
                 if cost == 0.0:
                     f["cost"] = "free"

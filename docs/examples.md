@@ -12,7 +12,7 @@ signature:
 
 Footer:
 ```
--# ⚡ hermes · MiniMax-M2.7 · minimax · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
+-# ⚡ hermes · mimo-v2.5-pro · xiaomi · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0006
 ```
 
 ---
@@ -22,7 +22,7 @@ Footer:
 A turn that made 3 tool calls before responding — tokens accumulate across all rounds:
 
 ```
--# ⚡ hermes · MiniMax-M2.7 · minimax · ~4.2s est. · 6,841↑ 1,500↓ 8,341 tok · ~$0.0036
+-# ⚡ hermes · mimo-v2.5-pro · xiaomi · ~4.2s est. · 6,841↑ 1,500↓ 8,341 tok · ~$0.0043
 ```
 
 ---

@@ -1,6 +1,6 @@
 # hermes-signature
 
-![Version](https://img.shields.io/badge/version-0.6.5-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.9.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Hermes](https://img.shields.io/badge/hermes--agent-compatible-gold?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -9,7 +9,7 @@
 A lightweight [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin that appends a signature footer to every LLM response.
 
 ```
--# ⚡ ignyte · MiniMax-M2.7 · minimax · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 trn · $0.43 ses · 12 turns · resets in 4h 57m · $99.48 bal
+-# 🔥 ignyte · mimo-v2.5-pro · xiaomi · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · 800 cached · ~$0.0004 trn · $0.43 ses · 12 turns · resets in 4h 57m · $99.48 bal
 -# 🔧 web_search×3 · bash×2 · vision_analyze×3
 -# 🔩 gemini-2.5-flash-lite×3
 ```
@@ -23,6 +23,7 @@ No patching of Hermes core. Survives `hermes update`. Pure plugin via native hoo
 - **Model & provider** — shows exactly what handled the turn
 - **Estimated latency** — measured from `pre_llm_call` to response, labelled `est.`
 - **Token usage** — accumulated across all API calls in the turn; shows `input↑ output↓` split and/or total, independently togglable
+- **Cached tokens** — shows `800 cached` when the API reports cached input; cost calculation uses the cheaper cache rate
 - **Per-turn cost** — computed from a built-in pricing table, labelled `trn`; overridable per model in config
 - **Session cost** — cumulative spend for the full session, labelled `ses`
 - **Session turn counter** — number of LLM turns since session start
@@ -71,6 +72,7 @@ signature:
   show_tokens: true             # Master toggle for all token display
   show_tokens_direction: true   # Show 1,247↑ 600↓ input/output split
   show_tokens_total: true       # Show 1,847 tok combined count
+  show_cached: true             # Show cached token count (500 cached)
   show_cost: true               # Per-turn cost (~$0.0004 trn)
   show_session_cost: true       # Cumulative session cost ($0.43 ses)
   show_turns: true              # Turn counter (12 turns)
@@ -88,6 +90,7 @@ signature:
     - latency
     - tokens_direction
     - tokens_total
+    - cached
     - cost
     - session_cost
     - turns
@@ -107,9 +110,10 @@ signature:
     video_analyze: "gemini-2.5-flash-lite"
 
   pricing:                      # Optional per-model price overrides (USD/1M tokens)
-    MiniMax-M2.7:
-      input: 0.30
-      output: 1.10
+    mimo-v2.5-pro:
+      input: 0.435
+      output: 0.870
+      cache: 0.0036
 ```
 
 See [docs/configuration.md](docs/configuration.md) for the full reference.
@@ -119,7 +123,7 @@ See [docs/configuration.md](docs/configuration.md) for the full reference.
 ## Footer Format
 
 ```
--# {icon} {agent_name} · {model} · {provider} · ~{latency} · {input}↑ {output}↓ · {total} tok · ~${cost} trn · ${session} ses · {N} turns · {reset} · ${balance} bal
+-# {icon} {agent_name} · {model} · {provider} · ~{latency} · {input}↑ {output}↓ · {total} tok · {cached} cached · ~${cost} trn · ${session} ses · {N} turns · {reset} · ${balance} bal
 -# 🔧 {tool}×{n} · {tool} · ...
 -# 🔩 {aux_model}×{n} · ...
 ```
@@ -164,7 +168,7 @@ API keys are read from `os.environ` first, then from `~/.hermes/.env` as fallbac
 
 ## Pricing Table
 
-Built-in rates are included for MiniMax, Gemini, Anthropic, OpenAI, DeepSeek, and local Ollama models (always `free`). Override any model in config. See [docs/pricing.md](docs/pricing.md) for the full table.
+Built-in rates are included for MiMo, DeepSeek, MiniMax, Gemini, Anthropic, OpenAI, and local Ollama models (always `free`). Override any model in config. See [docs/pricing.md](docs/pricing.md) for the full table and MiMo Token Plan subscription details.
 
 ---
 

@@ -1,5 +1,37 @@
 # Changelog
 
+## [0.9.0] — 2026-06-09
+
+### Added
+- **Cached token tracking** — footer now shows `800 cached` when the API reports cached input tokens via `prompt_tokens_details.cached_tokens`
+- **Cache-aware cost calculation** — cached input tokens use the cheaper cache rate (e.g. MiMo v2.5 Pro: $0.0036/1M vs $0.435/1M regular input); models without a cache rate fall back to the regular input rate
+- `show_cached` config flag (default: `true`) — toggle cached token display on/off
+- `cache` field in pricing table — per-model cached input rate (optional; falls back to `input` rate if absent)
+- `cached` field added to configurable `order:` list (default position: after `tokens_total`)
+- Built-in cache rates for MiMo v2.5 series: `mimo-v2.5-pro` ($0.0036), `mimo-v2.5` ($0.0028), `mimo-v2-flash` ($0.01)
+
+### Changed
+- `estimate_cost()` now accepts optional `cached_tokens` parameter for split-rate calculation
+- `on_post_api_request` extracts and accumulates cached tokens per model per turn
+- Version bumped to 0.9.0
+
+---
+
+## [0.8.0] — 2026-06-09
+
+### Added
+- **Xiaomi MiMo v2.5 series pricing** — built-in rates for `mimo-v2.5-pro` ($0.435/$0.870), `mimo-v2.5` ($0.14/$0.28), `mimo-v2-flash` ($0.10/$0.30), `mimo-v2-pro` ($1.00/$3.00)
+- **DeepSeek v4 series pricing** — `deepseek-v4-pro` ($0.50/$2.00), `deepseek-v4-flash` ($0.10/$0.40)
+- **MiMo Token Plan subscription docs** — annual plans, credit consumption rates, key policies (Lite $63.36/yr through Max $1,056/yr)
+
+### Changed
+- Default model reference updated from `MiniMax-M2.7` to `mimo-v2.5-pro` across docstrings and config examples
+- MiniMax demoted to "legacy" in pricing docs
+- Footer example updated to show MiMo model and 🔥 icon
+- Version bumped to 0.8.0
+
+---
+
 ## [0.6.5] — 2026-06-08
 
 ### Fixed
