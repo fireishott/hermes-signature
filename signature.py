@@ -63,6 +63,7 @@ from typing import Any
 
 from .pricing import estimate_cost
 from .usage import get_balance_label, get_reset_label, get_usage_label, refresh_in_background
+from .wrapper_metadata import fetch_wrapper_turn_metadata
 
 # Per-session token accumulator: {session_id: {model: {"prompt": int, "completion": int}}}
 _session_usage: dict[str, dict[str, dict[str, int]]] = {}
@@ -171,8 +172,10 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
             return None
 
     session_id = kwargs.get("session_id", "") or ""
-    model = kwargs.get("model", "") or ""
-    provider = kwargs.get("provider", "")
+    hook_model = kwargs.get("model", "") or ""
+    hook_provider = kwargs.get("provider", "")
+    model = hook_model
+    provider = hook_provider
 
     icon       = cfg.get("icon", "⚡")
     agent_name = cfg.get("agent_name", "hermes")
@@ -194,8 +197,23 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     order: list[str] = cfg.get("order", _DEFAULT_ORDER)
     custom_pricing = cfg.get("pricing")
+    wrapper_cfg: dict[str, Any] = cfg.get("wrapper_metadata", {}) or {}
+    wrapper_enabled = wrapper_cfg.get("enabled", False)
+    wrapper_base_url = str(wrapper_cfg.get("base_url", "http://127.0.0.1:8767")).strip()
+    wrapper_timeout_ms = int(wrapper_cfg.get("timeout_ms", 150) or 150)
+    wrapper_meta = None
+    if wrapper_enabled and wrapper_base_url:
+        wrapper_meta = fetch_wrapper_turn_metadata(
+            wrapper_base_url,
+            model=hook_model or cfg.get("default_model", ""),
+            response_text=response_text,
+            timeout_ms=wrapper_timeout_ms,
+        )
 
     # Fall back to configured defaults when the framework doesn't pass model/provider
+    if wrapper_meta:
+        model = str(wrapper_meta.get("display_model") or wrapper_meta.get("upstream_model") or model or "")
+        provider = str(wrapper_meta.get("upstream_provider") or provider or "")
     if not model:
         model = cfg.get("default_model", "")
     if not provider:
@@ -212,22 +230,36 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
         f["provider"] = provider or None
 
     if show_latency:
-        with _start_lock:
-            start = _turn_start.get(session_id)
-        if start:
-            elapsed = time.monotonic() - start
-            f["latency"] = f"~{elapsed:.1f}s est."
+        latency_ms = wrapper_meta.get("latency_ms") if wrapper_meta else None
+        if latency_ms:
+            f["latency"] = f"~{(float(latency_ms) / 1000):.1f}s est."
+        else:
+            with _start_lock:
+                start = _turn_start.get(session_id)
+            if start:
+                elapsed = time.monotonic() - start
+                f["latency"] = f"~{elapsed:.1f}s est."
 
     # Tokens + cost (primary model only — aux calls don't fire post_api_request)
     with _usage_lock:
         all_usage = _session_usage.pop(session_id, {})
 
     primary_usage = all_usage.pop(model, None) or all_usage.pop("_unattributed", None)
+    wrapper_prompt_tok = int(wrapper_meta.get("prompt_tokens", 0) or 0) if wrapper_meta else 0
+    wrapper_completion_tok = int(wrapper_meta.get("completion_tokens", 0) or 0) if wrapper_meta else 0
+    wrapper_total_tok = int(wrapper_meta.get("total_tokens", 0) or 0) if wrapper_meta else 0
+    turn_cost_usd = None
+    if wrapper_meta and wrapper_meta.get("total_cost_usd") is not None:
+        turn_cost_usd = float(wrapper_meta["total_cost_usd"])
 
-    if primary_usage:
-        prompt_tok = primary_usage["prompt"]
-        completion_tok = primary_usage["completion"]
-        total_tok = prompt_tok + completion_tok
+    if wrapper_total_tok or primary_usage:
+        prompt_tok = wrapper_prompt_tok
+        completion_tok = wrapper_completion_tok
+        total_tok = wrapper_total_tok
+        if not total_tok and primary_usage:
+            prompt_tok = primary_usage["prompt"]
+            completion_tok = primary_usage["completion"]
+            total_tok = prompt_tok + completion_tok
 
         if show_tokens and total_tok:
             if show_tokens_direction:
@@ -236,7 +268,9 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
                 f["tokens_total"] = f"{total_tok:,} tok"
 
         if show_cost:
-            cost = estimate_cost(model, prompt_tok, completion_tok, custom_pricing)
+            cost = turn_cost_usd
+            if cost is None:
+                cost = estimate_cost(model, prompt_tok, completion_tok, custom_pricing)
             if cost is not None:
                 if cost == 0.0:
                     f["cost"] = "free"
@@ -289,6 +323,23 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     with _aux_lock:
         aux_models = _session_aux_models.pop(session_id, None)
 
+    if wrapper_meta and wrapper_meta.get("tool_counts"):
+        wrapper_tools = {
+            str(name): int(count)
+            for name, count in (wrapper_meta.get("tool_counts") or {}).items()
+            if name and count
+        }
+        if wrapper_tools:
+            tools = wrapper_tools
+            aux_map: dict[str, str] = cfg.get("aux_tool_models", {})
+            derived_aux: dict[str, int] = {}
+            for tool_name, count in wrapper_tools.items():
+                backing_model = aux_map.get(tool_name)
+                if backing_model:
+                    derived_aux[backing_model] = derived_aux.get(backing_model, 0) + count
+            if derived_aux:
+                aux_models = derived_aux
+
     # Respect user-specified order for extra lines if present, else tools then aux
     extra_order = [f for f in order if f in ("tools", "aux")]
     if not extra_order:
@@ -296,10 +347,16 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     for field in extra_order:
         if field == "tools" and show_tools and tools:
-            tool_parts = [f"{n}×{c}" if c > 1 else n for n, c in tools.items()]
+            tool_parts = [
+                f"{name}×{count}" if count > 1 else name
+                for name, count in sorted(tools.items(), key=lambda item: (-item[1], item[0].lower()))
+            ]
             footer += "\n-# 🔧 " + " · ".join(tool_parts)
         elif field == "aux" and show_aux and aux_models:
-            aux_parts = [f"{m}×{c}" if c > 1 else m for m, c in aux_models.items()]
+            aux_parts = [
+                f"{name}×{count}" if count > 1 else name
+                for name, count in sorted(aux_models.items(), key=lambda item: (-item[1], item[0].lower()))
+            ]
             footer += "\n-# 🔩 " + " · ".join(aux_parts)
 
     return response_text + "\n\n" + footer
