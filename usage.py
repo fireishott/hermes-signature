@@ -134,10 +134,16 @@ def _fetch_openrouter_balance(api_key: Optional[str] = None) -> Optional[float]:
 def _fetch_balance_and_cache(hermes_provider: str, api_key: Optional[str] = None) -> None:
     provider = (hermes_provider or "").lower().strip()
     balance: Optional[float] = None
+    
+    # Handle explicit custom providers
     if provider == "deepseek" or provider == "custom:deepseek":
         balance = _fetch_deepseek_balance()
     elif "openrouter" in provider:
         balance = _fetch_openrouter_balance(api_key)
+    # Fallback: if Hermes passes just "custom", try OpenRouter (most common custom provider)
+    elif provider == "custom":
+        balance = _fetch_openrouter_balance(api_key)
+        
     if balance is not None:
         with _balance_lock:
             _balance_cache[provider] = balance
