@@ -98,12 +98,12 @@ Xiaomi offers a unified Credits subscription system with four tiers. One subscri
 **Credit consumption rates:**
 - `mimo-v2.5` / `mimo-v2-flash` — **1x** (1 token = 1 credit)
 - `mimo-v2.5-pro` / `mimo-v2-pro` — **2x** (1 token = 2 credits)
-- TTS models — **0x** (free for a limited time)
+- **TTS models** (`mimo-v2.5-tts`, `mimo-v2-tts-voiceclone`, `mimo-v2-tts-voicedesign`, `mimo-v2-tts`) — **0x** (free for a limited time)
 
 **Key policies:**
 - Token Plan uses `tp-xxxxx` format API keys (distinct from pay-as-you-go `sk-xxxxx` keys)
 - No 5-hour quota cap — supports concentrated heavy tasks
-- Off-peak usage (00:00–08:00 Beijing Time) gets a **0.8x** coefficient (20% credit discount)
+- **Off-peak discount:** usage during 9:00 AM – 5:00 PM PDT (00:00–08:00 Beijing Time) gets a **0.8x** coefficient — **20% off** credit consumption
 - Downgrades not supported; upgrades pay the difference
 - First purchase: 12% off (once per account)
 - Refunds not supported; unused credits are not refunded
