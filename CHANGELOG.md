@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1 — agent_name auto-fallback
+
+- `agent_name` now falls back to the active profile name when not explicitly set in config. Set `agent_name` only to override (e.g. "Ignyte" for the default profile).
+
 ## 0.10.0 — Multi-profile support
 
 - **Profile field** — Footer now shows the active Hermes profile name (e.g., `default`, `flynt`). Controlled by `show_profile: true` (default on).

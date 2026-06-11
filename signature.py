@@ -15,7 +15,7 @@ Hooks used:
 Config (config.yaml):
     signature:
       enabled: true
-      agent_name: "ignyte"
+      agent_name: "ignyte"    # falls back to active profile name if unset
       icon: "⚡"
       default_model: "mimo-v2.5-pro"  # fallback when model not in hook kwargs
       show_profile: true         # show active profile name (e.g., \"default\", \"flynt\")
@@ -197,10 +197,10 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     model = hook_model
     provider = hook_provider
 
-    icon       = cfg.get("icon", "⚡")
-    agent_name = cfg.get("agent_name", "hermes")
-
     active_profile = _get_active_profile()
+
+    icon       = cfg.get("icon", "⚡")
+    agent_name = cfg.get("agent_name", active_profile)
 
     show_model            = cfg.get("show_model", True)
     show_provider         = cfg.get("show_provider", True)
