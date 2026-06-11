@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.0] — 2026-06-10
+
+### Added
+- **GPT-5.5 pricing** — added built-in rates (.00/0.00//bin/bash.50).
+
+### Changed
+- **Footer format** — removed agent profile name from the primary line.
+- Version bumped to 0.11.0.
+
 ## 0.10.2 — Simplified: profile name IS the agent name
 
 - Removed `agent_name` config. Footer now shows `{icon} {profile_name}` — the active profile slug + its icon.

@@ -100,13 +100,99 @@ def _load_config() -> dict:
         return {}
 
 
-def _get_active_profile() -> str:
-    """Return the active Hermes profile name, or 'default'."""
+def _profile_exists(name: str) -> bool:
+    """Return True when *name* is a real local Hermes profile."""
+    clean = (name or "").strip()
+    if not clean or clean in {"default", "custom"}:
+        return clean == "default"
+    try:
+        from hermes_cli.profiles import get_profile_dir
+        return get_profile_dir(clean).exists()
+    except Exception:
+        return False
+
+
+def _profile_from_home_path(home: Any) -> str | None:
+    """Infer a profile name from a Hermes home path."""
+    try:
+        from pathlib import Path
+
+        resolved = Path(str(home)).expanduser().resolve()
+        parts = resolved.parts
+        if len(parts) >= 2 and parts[-2] == "profiles" and parts[-1]:
+            return parts[-1]
+        if resolved.name == ".hermes":
+            return "default"
+    except Exception:
+        return None
+    return None
+
+
+def _valid_profile_label(value: Any) -> str | None:
+    """Normalize and validate a candidate profile label.
+
+    Desktop/API layers may advertise a model alias like ``hermes``. Do not let
+    that leak into the footer unless it is an actual profile directory.
+    """
+    label = str(value or "").strip()
+    if not label:
+        return None
+    if label in {"custom"}:
+        return None
+    if label == "default":
+        return label
+    return label if _profile_exists(label) else None
+
+
+def _get_active_profile(cfg: dict | None = None, **kwargs: Any) -> str:
+    """Return the active Hermes profile name, or 'default'.
+
+    Priority:
+    1. signature.profile_name/profile in the active profile's config.yaml
+    2. explicit hook kwargs when Hermes core provides them
+    3. Hermes profile resolver / HERMES_HOME path inference
+
+    The config override is intentional: gateway/Desktop global-remote workers can
+    carry aliases such as ``hermes`` even while the loaded config belongs to
+    ``flynt``. The footer should show the profile that owns the active config.
+    """
+    cfg = cfg or {}
+
+    for key in ("profile_name", "profile", "active_profile"):
+        label = _valid_profile_label(cfg.get(key))
+        if label:
+            return label
+
+    for key in ("profile_name", "profile", "active_profile"):
+        label = _valid_profile_label(kwargs.get(key))
+        if label:
+            return label
+
     try:
         from hermes_cli.profiles import get_active_profile_name
-        return get_active_profile_name() or "default"
+        label = _valid_profile_label(get_active_profile_name())
+        if label:
+            return label
     except Exception:
-        return "default"
+        pass
+
+    try:
+        from hermes_constants import get_hermes_home
+        label = _valid_profile_label(_profile_from_home_path(get_hermes_home()))
+        if label:
+            return label
+    except Exception:
+        pass
+
+    try:
+        import os
+        label = _valid_profile_label(_profile_from_home_path(os.environ.get("HERMES_HOME")))
+        if label:
+            return label
+    except Exception:
+        pass
+
+    return "default"
 
 
 def on_pre_llm_call(**kwargs: Any) -> None:
@@ -193,10 +279,12 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     model = hook_model
     provider = hook_provider
 
-    active_profile = _get_active_profile()
+    active_profile = _get_active_profile(cfg, **kwargs)
 
     icon = cfg.get("icon", "⚡")
 
+    show_profile          = cfg.get("show_profile", False)
+    agent_name_override   = cfg.get("agent_name")
     show_model            = cfg.get("show_model", True)
     show_provider         = cfg.get("show_provider", True)
     show_latency          = cfg.get("show_latency", True)
@@ -330,7 +418,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     # ── Assemble primary line in configured order ────────────────────────────
 
-    parts: list[str] = [f"{icon} {active_profile}"]
+    parts: list[str] = [f"{icon}"]
     for field in order:
         val = f.get(field)
         if val:
