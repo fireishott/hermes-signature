@@ -1,6 +1,12 @@
 # Changelog
 
-## [0.9.0] — 2026-06-09
+## 0.10.0 — Multi-profile support
+
+- **Profile field** — Footer now shows the active Hermes profile name (e.g., `default`, `flynt`). Controlled by `show_profile: true` (default on).
+- **Profile-scoped caches** — Usage/balance caches are now keyed by `(profile, provider)` tuple, preventing cross-profile data bleed when switching between profiles.
+- **New config flag** — `show_profile: true/false` in the signature config block.
+
+## 0.9.0 — DeepSeek balance tracking
 
 ### Added
 - **Cached token tracking** — footer now shows `800 cached` when the API reports cached input tokens via `prompt_tokens_details.cached_tokens`

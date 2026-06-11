@@ -36,12 +36,12 @@ _PROVIDER_MAP: dict[str, str] = {
     "custom:deepseek": "deepseek",
 }
 
-# Cache: usage_provider_key → (reset_at, used_percent)
-_cache: dict[str, tuple[Optional[datetime], Optional[float]]] = {}
+# Cache: (profile_name, usage_provider_key) → (reset_at, used_percent)
+_cache: dict[tuple[str, str], tuple[Optional[datetime], Optional[float]]] = {}
 _cache_lock = threading.Lock()
 
-# Balance cache: hermes_provider → float (USD)
-_balance_cache: dict[str, float] = {}
+# Balance cache: (profile_name, hermes_provider) → float (USD)
+_balance_cache: dict[tuple[str, str], float] = {}
 _balance_lock = threading.Lock()
 
 
@@ -49,7 +49,7 @@ def _resolve_provider(hermes_provider: str) -> Optional[str]:
     return _PROVIDER_MAP.get((hermes_provider or "").lower().strip())
 
 
-def _fetch_and_cache(usage_provider: str, base_url: Optional[str] = None, api_key: Optional[str] = None) -> None:
+def _fetch_and_cache(usage_provider: str, profile: str = "default", base_url: Optional[str] = None, api_key: Optional[str] = None) -> None:
     try:
         from agent.account_usage import fetch_account_usage
         snap = fetch_account_usage(usage_provider, base_url=base_url, api_key=api_key)
@@ -66,7 +66,7 @@ def _fetch_and_cache(usage_provider: str, base_url: Optional[str] = None, api_ke
                     if used_pct is None or w.used_percent > used_pct:
                         used_pct = w.used_percent
         with _cache_lock:
-            _cache[usage_provider] = (reset_at, used_pct)
+            _cache[(profile, usage_provider)] = (reset_at, used_pct)
     except Exception:
         pass
 
@@ -131,7 +131,7 @@ def _fetch_openrouter_balance(api_key: Optional[str] = None) -> Optional[float]:
         return None
 
 
-def _fetch_balance_and_cache(hermes_provider: str, api_key: Optional[str] = None) -> None:
+def _fetch_balance_and_cache(hermes_provider: str, profile: str = "default", api_key: Optional[str] = None) -> None:
     provider = (hermes_provider or "").lower().strip()
     balance: Optional[float] = None
     
@@ -146,7 +146,7 @@ def _fetch_balance_and_cache(hermes_provider: str, api_key: Optional[str] = None
         
     if balance is not None:
         with _balance_lock:
-            _balance_cache[provider] = balance
+            _balance_cache[(profile, provider)] = balance
 
 
 def refresh_in_background(
@@ -154,30 +154,31 @@ def refresh_in_background(
     base_url: Optional[str] = None,
     api_key: Optional[str] = None,
     fetch_balance: bool = False,
+    profile: str = "default",
 ) -> None:
     """Kick off background fetches for quota and optionally balance. Non-blocking."""
     usage_provider = _resolve_provider(hermes_provider)
     if usage_provider:
         threading.Thread(
             target=_fetch_and_cache,
-            args=(usage_provider, base_url, api_key),
+            args=(usage_provider, profile, base_url, api_key),
             daemon=True,
         ).start()
     if fetch_balance:
         threading.Thread(
             target=_fetch_balance_and_cache,
-            args=(hermes_provider, api_key),
+            args=(hermes_provider, profile, api_key),
             daemon=True,
         ).start()
 
 
-def get_reset_label(hermes_provider: str) -> Optional[str]:
+def get_reset_label(hermes_provider: str, profile: str = "default") -> Optional[str]:
     """Return 'resets in 4h 57m' from cache, or None if not available."""
     usage_provider = _resolve_provider(hermes_provider)
     if not usage_provider:
         return None
     with _cache_lock:
-        entry = _cache.get(usage_provider)
+        entry = _cache.get((profile, usage_provider))
     if not entry:
         return None
     reset_at, _ = entry
@@ -193,13 +194,13 @@ def get_reset_label(hermes_provider: str) -> Optional[str]:
     return f"resets in {rm}m"
 
 
-def get_usage_label(hermes_provider: str) -> Optional[str]:
+def get_usage_label(hermes_provider: str, profile: str = "default") -> Optional[str]:
     """Return '42% used' from cache, or None if not available."""
     usage_provider = _resolve_provider(hermes_provider)
     if not usage_provider:
         return None
     with _cache_lock:
-        entry = _cache.get(usage_provider)
+        entry = _cache.get((profile, usage_provider))
     if not entry:
         return None
     _, used_pct = entry
@@ -208,11 +209,11 @@ def get_usage_label(hermes_provider: str) -> Optional[str]:
     return f"{round(used_pct)}% used"
 
 
-def get_balance_label(hermes_provider: str) -> Optional[str]:
+def get_balance_label(hermes_provider: str, profile: str = "default") -> Optional[str]:
     """Return '$99.48 bal' from cache, or None if not available."""
     provider = (hermes_provider or "").lower().strip()
     with _balance_lock:
-        balance = _balance_cache.get(provider)
+        balance = _balance_cache.get((profile, provider))
     if balance is None:
         return None
     return f"${balance:.2f} bal"

@@ -3,7 +3,7 @@
 ## Structure
 
 ```
--# {icon} {agent_name} · {model} · {provider} · ~{latency}s est. · {tokens} tok · ~${cost}
+-# {icon} {agent_name} · {profile} · {model} · {provider} · ~{latency}s est. · {tokens} tok · ~${cost}
 ```
 
 Fields are joined with ` · ` (space-middot-space). Any field that is disabled or unavailable is omitted — the separators contract automatically.
@@ -17,7 +17,7 @@ The footer is appended to the response with two newlines:
 ```
 {response_text}
 
--# ⚡ hermes · mimo-v2.5-pro · xiaomi · ~1.4s est. · 1,847 tok · ~$0.0004
+-# ⚡ hermes · default · deepseek-v4-pro · deepseek · ~1.4s est. · 1,847 tok · ~$0.0004
 ```
 
 The `-#` prefix is a Discord markdown feature — it renders as small, dimmed subheading text. On other platforms it appears as literal `-#` followed by the content.
@@ -29,6 +29,7 @@ The `-#` prefix is a Discord markdown feature — it renders as small, dimmed su
 | Field | Example | Notes |
 |---|---|---|
 | icon + name | `⚡ hermes` | Always present when plugin is enabled |
+| profile | `flynt` | Omitted if `show_profile: false` or when unavailable |
 | model | `mimo-v2.5-pro` | Omitted if model name is empty |
 | provider | `xiaomi` | Omitted if provider is empty |
 | latency | `~1.4s est.` | Omitted if `pre_llm_call` wasn't recorded for this session |
@@ -55,7 +56,7 @@ Discord renders `-#` as small dimmed text (Discord "subtext" markdown). The foot
 ```
 Here's your answer...
 
-⚡ hermes · mimo-v2.5-pro · xiaomi · ~1.4s est. · 1,847 tok · ~$0.0004
+⚡ hermes · default · deepseek-v4-pro · deepseek · ~1.4s est. · 1,847 tok · ~$0.0004
 ↑ rendered small and grey
 ```
 
@@ -66,7 +67,7 @@ No special markdown rendering. The `-#` appears as a literal prefix:
 ```
 Here's your answer...
 
--# ⚡ hermes · mimo-v2.5-pro · xiaomi · ~1.4s est. · 1,847 tok · ~$0.0004
+-# ⚡ hermes · default · deepseek-v4-pro · deepseek · ~1.4s est. · 1,847 tok · ~$0.0004
 ```
 
 Consider using `platforms: ["discord"]` if you only want the footer where it renders nicely, or customize the icon/format for other platforms.
@@ -81,32 +82,32 @@ Same as BlueBubbles — plain text, `-#` is literal. Works fine as a visible foo
 
 All fields on, with tools and aux model:
 ```
--# ⚡ hermes · mimo-v2.5-pro · xiaomi · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 · 4 turns
+-# ⚡ hermes · default · deepseek-v4-pro · deepseek · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 · 4 turns
 -# 🔧 web_search×3 · vision_analyze×3
 -# 🔩 gemini-2.5-flash-lite×3
 ```
 
 All fields on, no aux:
 ```
--# ⚡ hermes · mimo-v2.5-pro · xiaomi · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
+-# ⚡ hermes · default · deepseek-v4-pro · deepseek · ~1.4s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004
 ```
 
 No provider, no cost:
 ```
--# ⚡ hermes · mimo-v2.5-pro · ~1.4s est. · 1,247↑ 600↓ 1,847 tok
+-# ⚡ hermes · default · deepseek-v4-pro · ~1.4s est. · 1,247↑ 600↓ 1,847 tok
 ```
 
 Local model (free):
 ```
--# ⚡ hermes · qwen2.5:7b · custom · ~0.8s est. · 412↑ 100↓ 512 tok · free
+-# ⚡ hermes · default · qwen2.5:7b · custom · ~0.8s est. · 412↑ 100↓ 512 tok · free
 ```
 
 Model not in pricing table:
 ```
--# ⚡ hermes · my-unknown-model · custom · ~1.1s est. · 240↑ 60↓ 300 tok
+-# ⚡ hermes · default · my-unknown-model · custom · ~1.1s est. · 240↑ 60↓ 300 tok
 ```
 
 Tokens only:
 ```
--# ⚡ hermes · 1,247↑ 600↓ 1,847 tok
+-# ⚡ hermes · default · 1,247↑ 600↓ 1,847 tok
 ```

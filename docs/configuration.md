@@ -13,6 +13,7 @@ signature:
   icon: "⚡"                # Leading character(s). Any emoji or text.
   default_model: ""         # Fallback model name when Hermes doesn't pass one.
 
+  show_profile: true         # Show active Hermes profile name (e.g., default, flynt).
   show_model: true          # Include model name in footer.
   show_provider: true       # Include provider name in footer.
   show_latency: true        # Include ~Xs est. latency.
@@ -50,7 +51,7 @@ Master on/off switch. When `false`, the plugin registers its hooks but returns `
 The label displayed after the icon at the start of the footer. Change this to match your agent's name or persona.
 
 ```
--# ⚡ myagent · gpt-4o · openai · ~1.2s est. · 842 tok · ~$0.0023
+-# ⚡ myagent · default · gpt-4o · openai · ~1.2s est. · 842 tok · ~$0.0023
           ───────
           this part
 ```
@@ -63,6 +64,19 @@ The label displayed after the icon at the start of the footer. Change this to ma
 Any string placed before `agent_name`. Typically a single emoji, but can be any character sequence.
 
 ---
+
+### `show_profile`
+**Type:** `bool` | **Default:** `true`
+
+Shows the active Hermes profile name in the footer (e.g., `default`, `flynt`). The profile name is resolved at response time via `hermes_cli.profiles.get_active_profile_name()`. Falls back to `"default"` if the import fails or no profile is active.
+
+Use this to distinguish which profile handled a turn when running multiple Hermes profiles.
+
+```
+-# ⚡ myagent · flynt · gpt-4o · openai · ~1.2s est. · 842 tok · ~$0.0023
+                ─────
+                this part
+```
 
 ### `show_model`
 **Type:** `bool` | **Default:** `true`
@@ -179,6 +193,7 @@ signature:
   agent_name: "bot"
   icon: "·"
   show_model: true
+  show_profile: false    # hide profile
   show_provider: false   # hide provider
   show_latency: false    # hide latency
   show_tokens: true

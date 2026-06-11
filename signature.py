@@ -2,7 +2,7 @@
 hermes-signature — appends a configurable signature footer to every LLM response.
 
 Footer example:
-    -# 🔥 ignyte · mimo-v2.5-pro · xiaomi · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 trn · 12 turns
+    -# 🔥 ignyte · default · deepseek-v4-pro · deepseek · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 trn · 12 turns
     -# 🔧 web_search×3 · bash×2 · vision_analyze×3
     -# 🔩 gemini-2.5-flash-lite×3
 
@@ -18,6 +18,7 @@ Config (config.yaml):
       agent_name: "ignyte"
       icon: "⚡"
       default_model: "mimo-v2.5-pro"  # fallback when model not in hook kwargs
+      show_profile: true         # show active profile name (e.g., \"default\", \"flynt\")
       show_model: true
       show_provider: true
       show_latency: true
@@ -34,6 +35,7 @@ Config (config.yaml):
       show_reset: true        # resets in Xh Ym (anthropic, openai-codex, openrouter)
       show_usage_pct: false   # X% used (same providers; off by default)
       order:                  # footer field order (omit to use default)
+        - profile
         - model
         - provider
         - latency
@@ -101,6 +103,15 @@ def _load_config() -> dict:
         return {}
 
 
+def _get_active_profile() -> str:
+    """Return the active Hermes profile name, or 'default'."""
+    try:
+        from hermes_cli.profiles import get_active_profile_name
+        return get_active_profile_name() or "default"
+    except Exception:
+        return "default"
+
+
 def on_pre_llm_call(**kwargs: Any) -> None:
     """Record turn start time and reset accumulators for this session."""
     session_id = kwargs.get("session_id", "") or ""
@@ -159,6 +170,7 @@ def on_post_tool_call(**kwargs: Any) -> None:
 
 
 _DEFAULT_ORDER = [
+    "profile",
     "model", "provider", "latency",
     "tokens_direction", "tokens_total", "cached",
     "cost", "session_cost", "turns",
@@ -188,6 +200,8 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     icon       = cfg.get("icon", "⚡")
     agent_name = cfg.get("agent_name", "hermes")
 
+    active_profile = _get_active_profile()
+
     show_model            = cfg.get("show_model", True)
     show_provider         = cfg.get("show_provider", True)
     show_latency          = cfg.get("show_latency", True)
@@ -203,6 +217,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     show_balance          = cfg.get("show_balance", True)
     show_tools            = cfg.get("show_tools", True)
     show_aux              = cfg.get("show_aux", True)
+    show_profile          = cfg.get("show_profile", True)
 
     order: list[str] = cfg.get("order", _DEFAULT_ORDER)
     custom_pricing = cfg.get("pricing")
@@ -237,6 +252,9 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     if show_provider:
         f["provider"] = provider or None
+
+    if show_profile:
+        f["profile"] = active_profile
 
     if show_latency:
         latency_ms = wrapper_meta.get("latency_ms") if wrapper_meta else None
@@ -308,16 +326,16 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
             f["turns"] = f"{turn_count} turn" if turn_count == 1 else f"{turn_count} turns"
 
     if show_usage_pct:
-        f["usage_pct"] = get_usage_label(provider)
+        f["usage_pct"] = get_usage_label(provider, active_profile)
 
     if show_reset:
-        f["reset"] = get_reset_label(provider)
+        f["reset"] = get_reset_label(provider, active_profile)
 
     if show_balance:
-        f["balance"] = get_balance_label(provider)
+        f["balance"] = get_balance_label(provider, active_profile)
 
     # Kick off background refresh so the NEXT call has fresh data
-    refresh_in_background(provider, fetch_balance=show_balance)
+    refresh_in_background(provider, fetch_balance=show_balance, profile=active_profile)
 
     # ── Assemble primary line in configured order ────────────────────────────
 
