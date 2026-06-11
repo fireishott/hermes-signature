@@ -1,6 +1,6 @@
 # hermes-signature
 
-![Version](https://img.shields.io/badge/version-0.10.2-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.11.0-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Hermes](https://img.shields.io/badge/hermes--agent-compatible-gold?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -9,7 +9,7 @@
 A lightweight [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin that appends a signature footer to every LLM response.
 
 ```
--# 🔥 default · deepseek-v4-pro · deepseek · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · 800 cached · ~$0.0004 trn · $0.43 ses · 12 turns · resets in 4h 57m · $99.48 bal
+-# 🔥 gpt-5.5 · openai · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · 800 cached · ~$0.0084 trn · $0.43 ses · 12 turns · resets in 4h 57m · $99.48 bal
 -# 🔧 web_search×3 · bash×2 · vision_analyze×3
 -# 🔩 gemini-2.5-flash-lite×3
 ```
