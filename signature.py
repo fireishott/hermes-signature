@@ -145,28 +145,18 @@ def _valid_profile_label(value: Any) -> str | None:
 
 
 def _get_active_profile(cfg: dict | None = None, **kwargs: Any) -> str:
-    """Return the active Hermes profile name, or 'default'.
+    """Return the live Hermes profile name, or 'default'.
 
     Priority:
-    1. signature.profile_name/profile in the active profile's config.yaml
-    2. explicit hook kwargs when Hermes core provides them
-    3. Hermes profile resolver / HERMES_HOME path inference
+    1. Hermes profile resolver / HERMES_HOME path inference (source of truth)
+    2. explicit runtime hook kwargs, but only if they name a real profile
+    3. legacy signature.profile_name/profile config overrides
 
-    The config override is intentional: gateway/Desktop global-remote workers can
-    carry aliases such as ``hermes`` even while the loaded config belongs to
-    ``flynt``. The footer should show the profile that owns the active config.
+    Why this order: some Desktop/API/runtime layers surface non-profile identity
+    labels like ``hermes``. Those are useful elsewhere, but the footer should
+    display the actual active profile backing the current process.
     """
     cfg = cfg or {}
-
-    for key in ("profile_name", "profile", "active_profile"):
-        label = _valid_profile_label(cfg.get(key))
-        if label:
-            return label
-
-    for key in ("profile_name", "profile", "active_profile"):
-        label = _valid_profile_label(kwargs.get(key))
-        if label:
-            return label
 
     try:
         from hermes_cli.profiles import get_active_profile_name
@@ -191,6 +181,16 @@ def _get_active_profile(cfg: dict | None = None, **kwargs: Any) -> str:
             return label
     except Exception:
         pass
+
+    for key in ("active_profile", "profile_name", "profile", "agent_identity"):
+        label = _valid_profile_label(kwargs.get(key))
+        if label:
+            return label
+
+    for key in ("active_profile", "profile_name", "profile"):
+        label = _valid_profile_label(cfg.get(key))
+        if label:
+            return label
 
     return "default"
 
@@ -284,7 +284,6 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     icon = cfg.get("icon", "⚡")
 
     show_profile          = cfg.get("show_profile", True)
-    agent_name_override   = cfg.get("agent_name")
     show_model            = cfg.get("show_model", True)
     show_provider         = cfg.get("show_provider", True)
     show_latency          = cfg.get("show_latency", True)
@@ -422,9 +421,6 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     # ── Assemble primary line in configured order ────────────────────────────
 
     parts: list[str] = [f"{icon}"]
-    agent_name = str(agent_name_override or "").strip()
-    if agent_name:
-        parts.append(agent_name)
     for field in order:
         val = f.get(field)
         if val:
