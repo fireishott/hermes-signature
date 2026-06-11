@@ -1,12 +1,13 @@
 # Changelog
-
 ## [0.11.0] — 2026-06-10
 
 ### Added
-- **GPT-5.5 pricing** — added built-in rates (.00/0.00//bin/bash.50).
+- **OpenAI GPT-5.5 series pricing** — built-in rates for `gpt-5.5` ($5.00/$30.00) and cache ($0.50).
+- **Profile display control** — added `show_profile` and `agent_name` configuration flags.
 
 ### Changed
-- **Footer format** — removed agent profile name from the primary line.
+- **Default footer format** — now omits the agent profile name by default (`show_profile: false`).
+- Updated fallback model to `gpt-5.5`.
 - Version bumped to 0.11.0.
 
 ## 0.10.2 — Simplified: profile name IS the agent name
