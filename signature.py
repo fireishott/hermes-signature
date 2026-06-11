@@ -253,7 +253,7 @@ def on_post_tool_call(**kwargs: Any) -> None:
 
 
 _DEFAULT_ORDER = [
-    "model", "provider", "latency",
+    "profile", "model", "provider", "latency",
     "tokens_direction", "tokens_total", "cached",
     "cost", "session_cost", "turns",
     "usage_pct", "reset", "balance",
@@ -283,7 +283,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     icon = cfg.get("icon", "⚡")
 
-    show_profile          = cfg.get("show_profile", False)
+    show_profile          = cfg.get("show_profile", True)
     agent_name_override   = cfg.get("agent_name")
     show_model            = cfg.get("show_model", True)
     show_provider         = cfg.get("show_provider", True)
@@ -328,6 +328,9 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     # ── Compute all field values upfront ────────────────────────────────────
 
     f: dict[str, str | None] = {k: None for k in _DEFAULT_ORDER}
+
+    if show_profile:
+        f["profile"] = active_profile or None
 
     if show_model:
         f["model"] = model or None
@@ -419,6 +422,9 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     # ── Assemble primary line in configured order ────────────────────────────
 
     parts: list[str] = [f"{icon}"]
+    agent_name = str(agent_name_override or "").strip()
+    if agent_name:
+        parts.append(agent_name)
     for field in order:
         val = f.get(field)
         if val:

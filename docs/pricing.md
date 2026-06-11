@@ -28,8 +28,9 @@ Override any entry or add new models in `config.yaml`. See [configuration.md](co
 | **Anthropic** | | | |
 | `claude-opus-4-7` | $15.00 | $75.00 | — |
 | `claude-sonnet-4-6` | $3.00 | $15.00 | — |
-| `claude-haiku-4-5` | $0.80 | $4.00 | — |
+| `gemini-2.5-pro` | $1.25 | $10.00 | — |
 | **OpenAI** | | | |
+| `gpt-5.5` | $5.00 | $30.00 | $0.50 |
 | `gpt-4o` | $2.50 | $10.00 | — |
 | `gpt-4o-mini` | $0.15 | $0.60 | — |
 | **Ollama / Local** | | | |
