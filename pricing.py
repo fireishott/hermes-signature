@@ -38,7 +38,6 @@ PRICING: dict[str, dict[str, float]] = {
     "gpt-5.5":              {"input": 5.00,   "output": 30.00,  "cache": 0.50},
     "gpt-4o":               {"input": 2.50,   "output": 10.00},
     "gpt-4o-mini":          {"input": 0.15,   "output": 0.60},
-    "gpt-5.5":               {"input": 5.00,   "output": 30.00,  "cache": 0.50},
     # Ollama / local
     "qwen2.5:7b":           {"input": 0.00,   "output": 0.00},
     "qwen2.5:3b":           {"input": 0.00,   "output": 0.00},
