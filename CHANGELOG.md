@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.2 — Simplified: profile name IS the agent name
+
+- Removed `agent_name` config. Footer now shows `{icon} {profile_name}` — the active profile slug + its icon.
+- Removed `show_profile` toggle. Profile name is always the primary identity.
+- Config now just needs `icon:` per profile.
+
+
 ## 0.10.1 — agent_name auto-fallback
 
 - `agent_name` now falls back to the active profile name when not explicitly set in config. Set `agent_name` only to override (e.g. "Ignyte" for the default profile).

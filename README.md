@@ -1,6 +1,6 @@
 # hermes-signature
 
-![Version](https://img.shields.io/badge/version-0.10.0-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-0.10.2-blue?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
 ![Hermes](https://img.shields.io/badge/hermes--agent-compatible-gold?style=flat-square)
 ![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
@@ -9,7 +9,7 @@
 A lightweight [Hermes Agent](https://github.com/NousResearch/hermes-agent) plugin that appends a signature footer to every LLM response.
 
 ```
--# 🔥 ignyte · default · deepseek-v4-pro · deepseek · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · 800 cached · ~$0.0004 trn · $0.43 ses · 12 turns · resets in 4h 57m · $99.48 bal
+-# 🔥 default · deepseek-v4-pro · deepseek · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · 800 cached · ~$0.0004 trn · $0.43 ses · 12 turns · resets in 4h 57m · $99.48 bal
 -# 🔧 web_search×3 · bash×2 · vision_analyze×3
 -# 🔩 gemini-2.5-flash-lite×3
 ```
@@ -61,12 +61,10 @@ hermes gateway restart
 ```yaml
 signature:
   enabled: true
-  agent_name: "hermes"          # Label shown at the start of the footer
-  icon: "⚡"                    # Leading icon/emoji
+  icon: "🔥"                    # Emoji for this profile
   default_model: ""             # Fallback model name when framework doesn't pass one
 
   # Field toggles
-  show_profile: true            # Show active profile name (default, flynt, etc.)
   show_model: true
   show_provider: true
   show_latency: true
@@ -86,7 +84,6 @@ signature:
   # Field order — controls left-to-right order on the primary line
   # Omit entirely to use the default order. Fields not listed are hidden.
   order:
-    - profile
     - model
     - provider
     - latency

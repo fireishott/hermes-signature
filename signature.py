@@ -2,7 +2,7 @@
 hermes-signature — appends a configurable signature footer to every LLM response.
 
 Footer example:
-    -# 🔥 ignyte · default · deepseek-v4-pro · deepseek · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 trn · 12 turns
+    -# 🔥 default · deepseek-v4-pro · deepseek · ~1.2s est. · 1,247↑ 600↓ 1,847 tok · ~$0.0004 trn · 12 turns
     -# 🔧 web_search×3 · bash×2 · vision_analyze×3
     -# 🔩 gemini-2.5-flash-lite×3
 
@@ -15,10 +15,8 @@ Hooks used:
 Config (config.yaml):
     signature:
       enabled: true
-      agent_name: "ignyte"    # falls back to active profile name if unset
-      icon: "⚡"
+      icon: "🔥"                     # emoji for this profile
       default_model: "mimo-v2.5-pro"  # fallback when model not in hook kwargs
-      show_profile: true         # show active profile name (e.g., \"default\", \"flynt\")
       show_model: true
       show_provider: true
       show_latency: true
@@ -35,7 +33,6 @@ Config (config.yaml):
       show_reset: true        # resets in Xh Ym (anthropic, openai-codex, openrouter)
       show_usage_pct: false   # X% used (same providers; off by default)
       order:                  # footer field order (omit to use default)
-        - profile
         - model
         - provider
         - latency
@@ -170,7 +167,6 @@ def on_post_tool_call(**kwargs: Any) -> None:
 
 
 _DEFAULT_ORDER = [
-    "profile",
     "model", "provider", "latency",
     "tokens_direction", "tokens_total", "cached",
     "cost", "session_cost", "turns",
@@ -199,8 +195,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     active_profile = _get_active_profile()
 
-    icon       = cfg.get("icon", "⚡")
-    agent_name = cfg.get("agent_name", active_profile)
+    icon = cfg.get("icon", "⚡")
 
     show_model            = cfg.get("show_model", True)
     show_provider         = cfg.get("show_provider", True)
@@ -217,7 +212,6 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     show_balance          = cfg.get("show_balance", True)
     show_tools            = cfg.get("show_tools", True)
     show_aux              = cfg.get("show_aux", True)
-    show_profile          = cfg.get("show_profile", True)
 
     order: list[str] = cfg.get("order", _DEFAULT_ORDER)
     custom_pricing = cfg.get("pricing")
@@ -252,9 +246,6 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     if show_provider:
         f["provider"] = provider or None
-
-    if show_profile:
-        f["profile"] = active_profile
 
     if show_latency:
         latency_ms = wrapper_meta.get("latency_ms") if wrapper_meta else None
@@ -339,7 +330,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
 
     # ── Assemble primary line in configured order ────────────────────────────
 
-    parts: list[str] = [f"{icon} {agent_name}"]
+    parts: list[str] = [f"{icon} {active_profile}"]
     for field in order:
         val = f.get(field)
         if val:
