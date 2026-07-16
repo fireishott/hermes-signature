@@ -299,6 +299,7 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
     show_balance          = cfg.get("show_balance", True)
     show_tools            = cfg.get("show_tools", True)
     show_aux              = cfg.get("show_aux", True)
+    footer_format         = cfg.get("footer_format", "discord")  # "discord" (-#) or "standard" (--- separator)
 
     order: list[str] = cfg.get("order", _DEFAULT_ORDER)
     custom_pricing = cfg.get("pricing")
@@ -426,7 +427,13 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
         if val:
             parts.append(val)
 
-    footer = "-# " + " · ".join(parts)
+    # footer_format: "discord" uses -# prefix (Slack/Discord small-text syntax)
+    #                "standard" uses --- separator (renders in any markdown renderer)
+    is_standard = footer_format == "standard"
+    line_prefix = "" if is_standard else "-# "
+    sep = "\n\n---\n" if is_standard else "\n\n"
+
+    footer = line_prefix + " · ".join(parts)
 
     # ── Extra lines (tools, aux) — order configurable via order list too ─────
 
@@ -464,12 +471,12 @@ def on_transform_llm_output(response_text: str, **kwargs: Any) -> str | None:
                 f"{name}×{count}" if count > 1 else name
                 for name, count in sorted(tools.items(), key=lambda item: (-item[1], item[0].lower()))
             ]
-            footer += "\n-# 🔧 " + " · ".join(tool_parts)
+            footer += "\n" + line_prefix + "🔧 " + " · ".join(tool_parts)
         elif field == "aux" and show_aux and aux_models:
             aux_parts = [
                 f"{name}×{count}" if count > 1 else name
                 for name, count in sorted(aux_models.items(), key=lambda item: (-item[1], item[0].lower()))
             ]
-            footer += "\n-# 🔩 " + " · ".join(aux_parts)
+            footer += "\n" + line_prefix + "🔩 " + " · ".join(aux_parts)
 
-    return response_text + "\n\n" + footer
+    return response_text + sep + footer
