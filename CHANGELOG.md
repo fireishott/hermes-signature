@@ -1,4 +1,16 @@
 # Changelog
+
+## [0.12.0] — 2026-07-15
+
+### Added
+- **Footer format control** — new `footer_format` config option with two modes:
+  - `discord` (default): uses `-# ` prefix for Discord/Slack small-text syntax
+  - `standard`: uses `---` horizontal rule separator with plain text, renders correctly in Open WebUI, GitHub markdown, and any standard markdown renderer
+- Config key: `footer_format: standard` in signature block
+
+### Fixed
+- Signature footer now displays correctly in Open WebUI and other standard markdown renderers when `footer_format: standard` is set
+
 ## [0.11.0] — 2026-06-10
 
 ### Added
